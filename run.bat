@@ -1,0 +1,1 @@
+call hippoenv/Scripts/activate && python main.py

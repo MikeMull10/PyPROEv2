@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .title {
+            font-size: 60px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #003554;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+
+            background-image: url('data:image/png;base64,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');
+            background-repeat: repeat; /* Repeat the image */
+            background-attachment: fixed; /* Optional: Keep the background fixed during scrolling */
+        }
+
+        h1, h2 {
+            color: #0066cc;
+        }
+
+        h3 {
+            color: #00d7ff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0px;
+        }
+
+        p {
+            font-size: 16px;
+            color: #ffffff;
+            text-align: justify;
+        }
+
+        code {
+            font-family: Consolas, monospace;
+            background-color: #001f2d;
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: #00d7ff;
+        }
+
+        .section-title {
+            margin-top: 20px;
+        }
+
+        .code-block {
+            background-color: #001f2d;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            color: #00d7ff;
+            font-family: Consolas, monospace;
+            white-space: pre-wrap;
+        }
+
+        ol li {
+            margin-bottom: 5px;
+            font-size: 20px;
+        }
+
+        li a {
+            color: white;
+            text-decoration: none;
+            font-size: 20px;
+        }
+
+        li a:hover {
+            color: #0066cc;
+        }
+
+        hr {
+            border: 0;
+            border-top: 2px solid #0066cc; /* Blue color line */
+            margin: 20px 0; /* Space above and below the line */
+        }
+    </style>
+</head>
+    <body>
+        <h1 class="title">PyPROE Documentation</h1>
+        <div>
+            <h2>Table of Contents</h2>
+            <ol>
+                <li><a href="#sectionDOE">Design of Experiments</a></li>
+                <li><a href="#sectionMMD">Metamodeling</a></li>
+                <li><a href="#sectionFRM">Formulation</a></li>
+                <li><a href="#sectionOPT">Optimization</a></li>
+                <li><a href="#sectionPLT">Plotting</a></li>
+                <li><a href="#sectionGRA">Gradients</a></li>
+                <li><a href="#sectionDOEf">DOE Files</a></li>
+                <li><a href="#sectionFNFf">FNC Files</a></li>
+                <li><a href="#sectionCMD">Shortcuts</a></li>
+            </ol>
+        </div>
+        <hr>
+        <div id="sectionDOE">
+            <h1>Design of Experiments</h1>
+            <p>The Design of Experiements tab allows users to either create or import a design matrix that models an optimization problem.</p>
+            <h2>1. Open DOE File</h2>
+            <p>Opens up a prompt for the user to select a Design of Experiements file (.doe).</p>
+            <h2>2. Method</h2>
+            <p>Dropdown for the following options:</p>
+            <ul>
+                <li>Factorial</li>
+                <li>Central Composite, Spherical</li>
+                <li>Central Composite, Face-Centered</li>
+                <li>Taguchi Orthogonal Array</li>
+                <li>Latin Hypercube</li>
+            </ul>
+            <h2>3. Variable Count</h2>
+            <p>The number of variables in the design. Must be an integer between 1 and 99.</p>
+            <h2>4. Level Count</h2>
+            <p>The number of levels (test points) per variable in the design. Must be an integer between 2 and 20.</p>
+            <h2>5. Data Points<span style="font-size: 14px;"> (Hypercube Only)</span></h2>
+            <p>The number of points in the design. Must be an integer between 1 and 99.</p>
+            <h2>6. Function Count</h2>
+            <p>The number of functions in the design. Must be an integer between 0 and 99.</p>
+            <h2>7. Get Design</h2>
+            <p>Generates a popup for the user to input the variable boundaries and the function definitions.</p>
+            <h2>8. Edit Values</h2>
+            <p>Edit the values of the variable ranges (boundaries) and the function definitions. Any changes to the function definitions will automatically be updated and reflected in the design matrix.</p>
+            <h2>9. Add Point</h2>
+            <p>Add a point to the design matrix. Function values will automatically be calculated based on the values of the variables.</p>
+            <h2>10. Clear</h2>
+            <p>Clear the design matrix. This will delete all progress and cannot be undone.</p>
+            <h2>11. Delete Point</h2>
+            <p>Delete a point in the design matrix. The user can only delete points that they added, not the automatically generated ones.</p>
+            <h2>12. Metamodel</h2>
+            <p>Send the design matrix to the metamodeling tab. This button will automatically swap tabs and import the design matrix from the Design of Experiements tab.</p>
+            <h2>13. Compare</h2>
+            <p>Prompts user for input to compare how changing certain variables affects a specific function. There is a minimum requirement of 2 variables and 1 function for this feature to work. This feature is only visible after the design matrix has been created.</p>
+            <h2>14. Design Matrix Table</h2>
+            <p>The table where the points of the design matrix are displayed. The normalized variable values (i.e. X1 (normalized)) are not editable nor do they directly affect any results. The real variables and functions are directly editable. If the function(s) have a defined equation, then updating the variable value(s) will automically update the function value(s).</p>
+        </div>
+        <hr>
+        <div id="sectionMMD">
+            <h1>Metamodeling</h1>
+            <p>The Metamodeling tab allows users to take their design matrix and generate equations to help solve the optimization problem.</p>
+            <h2>1. Open DOE File</h2>
+            <p>Opens up a prompt for the user to select a Design of Experiements file (.doe).</p>
+            <h2>2. Method</h2>
+            <p>Dropdown for the following options:</p>
+            <ul>
+                <li>Polynomial Regression</li>
+                <li>Radial Basis Functions</li>
+            </ul>
+            <h2>3. Function</h2>
+            <p>Determines the type of the method used to generate the functions.<br>For Polynomial Regression, there are the following options:</p>
+            <ul>
+                <li>Linear Polynomial</li>
+                <li>Quadratic Polynomial with no Interaction</li>
+                <li>Quadratic Polynomial with Interaction</li>
+            </ul>
+            <p>For Radial Basis Functions, there are the following options:</p>
+            <ul>
+                <li>Linear</li>
+                <li>Cubic</li>
+                <li>Thin Plate Spline</li>
+                <li>Gaussian</li>
+                <li>Multiquadratic</li>
+                <li>Inverse Multiquadratic</li>
+                <li>Compactly Supported (2,0)</li>
+                <li>Compactly Supported (2,1)</li>
+                <li>Compactly Supported (2,2)</li>
+                <li>Compactly Supported (3,0)</li>
+                <li>Compactly Supported (3,1)</li>
+                <li>Compactly Supported (3,2)</li>
+                <li>Compactly Supported (3,3)</li>
+            </ul>
+            <h2>4. Polynomial Order<span style="font-size: 14px;"> (Radial Basis Functions Only)</span></h2>
+            <p>Dropdown for the following options:</p>
+            <ul>
+                <li>0 - The RBF approximation only considers the radial basis function values to interpolate or approximate the data.</li>
+                <li>1 - The interpolation can capture linear trends in the data, in addition to the localized effects modeled by the RBF.</li>
+            </ul>
+            <h2>5. Evaluate</h2>
+            <p>Prompt the user for comma separated values for each variable in the design. This will output the value of each variable entered and the calculated value of each function.</p>
+            <h2>6. Generate</h2>
+            <p>Generates the functions based on the previous settings (either Polynomial Regression or Radial Basis Functions).</p>
+            <h2>7. Clear</h2>
+            <p>Resets the data. The DOE file does not need to be re-imported, but everything else is deleted. This cannot be undone.</p>
+            <h2>8. Formulate</h2>
+            <p>Send the generated functions to the Formulation tab.</p>
+        </div>
+        <hr>
+        <div id="sectionFRM">
+            <h1>Formulation</h1>
+            <p>The Formulation tab allows users to use their mathematical equations and other design variables to create a Function file (.fnc) to perform optimization.</p>
+            <h2>1. Load FNC File</h2>
+            <p>Opens up a prompt for the user to select a Function file (.fnc).</p>
+            <h2>2. Optimization Functions</h2>
+            <p>Dropdown for the user to select the function(s) they wish to optimize.</p>
+            <h2>3. Variable</h2>
+            <p>Dropdown for the user to select the variable(s) needed for optimization.</p>
+            <h2>4. Equality Constraints</h2>
+            <p>Dropdown for the user to select the function(s) that are the equality constraints.</p>
+            <h2>5. Inequality Constraints</h2>
+            <p>Dropdown for the user to select the function(s) that are the inequality constraints.</p>
+            <h2>6. Constraint Adjustments</h2>
+            <p>Prompts the user to enter offsets for the constraint equations. For example, if the constraint function is <code>F2</code> and the desired constraint is <code>F2 = 3</code>, the value 3 can be input here as an offset instead of being directly incorporated into the equation itself.</p>
+            <h2>7. Gradient Policy</h2>
+            <p>Generates a popup to remind users of how PyPROE handles gradients. It has no functional use.</p>
+            <h2>8. Reset Environment</h2>
+            <p>Resets the data. This cannot be undone.</p>
+            <h2>9. Function and Variable Dropdowns</h2>
+            <p>Dropdowns for the different functions and variables. Metamodel Functions are functions imported directly from the Metamodeling tab. Imported Functions are functions imported from a Function file (.fnc). User Defined Functions are functions that were created in the Formulation tab directly. Variable ranges are imported from either the Metamodeling tab or the FNC file.</p>
+            <h2>10. Preview</h2>
+            <p>Previews the selected function or variable. They cannot be edited directly in this section.</p>
+            <h2>11. Create New Function</h2>
+            <p>Space for manually defining new functions or variables. Functions should be defined starting with F and variables should be defined starting with X. These will be displayed under User Defined Functions (UDF) for functions and Variable Ranges for variables.</p>
+        </div>
+        <hr>
+        <div id="sectionOPT">
+            <h1>Optimization</h1>
+            <p>The Optimization tab allows users to find the solution to their optimization problems using a variety of solving methods.</p>
+            <h2>1. Open FNC File</h2>
+            <p>Opens up a prompt for the user to select a Function file (.fnc).</p>
+            <h2>2. OPT Solver</h2>
+            <p>Dropdown for the following options:</p>
+            <h3>1. SLSQP (Single Obj)</h3>
+            <p>Single-objective optimization method that minimizes a single objective function. It handles both equality and inequality constraints and iteratively adjusts decision variables to find the optimal solution.</p>
+            <p>Uses the following parameters:</p>
+            <ul>
+                <li>Grid Size</li>
+            </ul>
+            <h3>2. SLSQP (Weighted Sum Formulation)</h3>
+            <p>Multi-objective optimization method that uses the Weighted Sum Formulation (WSF) to combine multiple objective functions into a single scalar value. The method generates a Pareto front, a set of solutions where no point is strictly better than another with respect to all objectives. Requires at least two objectives and iterates over different weightings to approximate the trade-offs between them.</p>
+            <p>Uses the following parameters:</p>
+            <ul>
+                <li>Normalize function?</li>
+                <li>Grid Size</li>
+                <li>Min-Weight</li>
+                <li>Weight Increment</li>
+            </ul>
+            <h3>3. NSGA-II</h3>
+            <p>Non-dominated sorting genetic algorithm with reference ponts (NSGA-III). Replaces NSGA-II's crowding distance-based selection with one using reference points. At a high level, the advantage of reference points is two-fold. First, they can provide a better distribution of points, especially on problems with many objectives where most solutions tend to be non-dominated. Second, the reference points can be selected to target specific regions of interest.</p>
+            <p>Uses the following parameters:</p>
+            <ul>
+                <li>Iterations/Generations</li>
+                <li>Population Size</li>
+                <li>Crossover Rate</li>
+                <li>Mutation Rate</li>
+            </ul>
+            <h3>4. NSGA-III</h3>
+            <p>NSGA-III (Non-dominated Sorting Genetic Algorithm III) is an extension of NSGA-II, designed to address many-objective optimization problems. It handles problems with more than three conflicting objectives and uses a reference-point-based approach to preserve diversity along the Pareto front. Unlike NSGA-II, which struggles with many objectives, NSGA-III ensures a well-distributed set of solutions even in high-dimensional objective spaces.</p>
+            <p>Uses the following parameters:</p>
+            <ul>
+                <li>Iterations/Generations</li>
+                <li>Crossover Rate</li>
+                <li>Mutation Rate</li>
+                <li>Outer Divisions</li>
+                <li>Inner Divisions</li>
+            </ul>
+            <h3>5. EpsMOA</h3>
+            <p>EpsMOA (Epsilon-based Multi-objective Optimization Algorithm) is an evolutionary algorithm designed to handle multi-objective optimization problems. Unlike traditional dominance-based methods, EpsMOA uses the epsilon indicator to evaluate solutions and guide the population toward a well-converged and diverse approximation of the Pareto front. The algorithm maintains an archive of the best-found solutions and updates it iteratively, ensuring that the solutions remain well-distributed along the Pareto front.</p>
+            <p>Uses the following parameters:</p>
+            <ul>
+                <li>Epsilons</li>
+                <li>Iterations/Generations</li>
+                <li>Population Size</li>
+                <li>Crossover Rate</li>
+                <li>Mutation Rate</li>
+            </ul>
+            <h2>3. Optimization Settings</h2>
+            <h3>1. Grid Size</h3>
+            <p>Integer between 1 and 100. Default: 5.</p>
+            <p>Determines the number of equally spaced samples generated along each dimension in the grid. A higher grid size increases the number of guesses by creating a finer grid, while a lower grid size reduces the number of guesses by creating a coarser grid.</p>
+            <h3>2. Iterations/Generations</h3>
+            <p>Integer between 1 and 10000. Default: 100.</p>
+            <p>Defines the number of cycles the algorithm will run.</p>
+            <h3>3. Min-Weight</h3>
+            <p>Decimal between 0 and 1 exclusively. Default: 0.01.</p>
+            <p>Defines the lower bound for weights in weighted formulations.</p>
+            <h3>4. Weight Increment</h3>
+            <p>Decimal between 0 and 1 exclusively. Default: 0.01.</p>
+            <p>Defines the adjustment interval for weights.</p>
+            <h3>5. Epsilons</h3>
+            <p>List of decimals. Each decimal should be between 0 and 1 exclusively. Default: 0.005.</p>
+            <p>The step size for adjusting epsilon values during optimization. Smaller increments allow for finer exploration, while larger increments expedite convergence.</p>
+            <h3>6. Population Size</h3>
+            <p>Integer between 1 and 100000. Default: 100.</p>
+            <p>Defines the number of candidate solutions in the optimization process.</p>
+            <h3>7. Mutation Rate</h3>
+            <p>Integer (percentage) between 1 and 100. Default: 1%.</p>
+            <p>Controls the probability of recombination.</p>
+            <h3>8. Crossover Rate</h3>
+            <p>Integer (percentage) between 1 and 100. Default: 90%.</p>
+            <p>Defines the frequency of random genetic changes.</p>
+            <h3>9. Outer Divisions</h3>
+            <p>Integer between 0 and 100000. Default: 100.</p>
+            <p>Defines the primary level of segmentation.</p>
+            <h3>10. Inner Divisions</h3>
+            <p>Integer between 0 and 100000. Default: 25.</p>
+            <p>Refines the divisions created by outer segmentation.</p>
+            <h3>11. Normalize function?</h3>
+            <p>Boolean Yes/No. Default: Yes.</p>
+            <p>Determines whether functions and gradients will be normalized before optimization.</p>
+            <h2>4. Start</h2>
+            <p>Begins the calculating the solution to the optimization problem.</p>
+            <h2>5. Stop</h2>
+            <p>Cancels calculating the solution to the optimization problem.</p>
+            <h2>6. Clear</h2>
+            <p>Clear the solution. This cannot be undone.</p>
+            <h2>7. View Graph</h2>
+            <p>Open a separate window that displays the graphed solution.</p>
+        </div>
+        <hr>
+        <div id="sectionPLT">
+            <h1>Plotting</h1>
+            <p>The Plotting tab allows users to graph the countor and surface plot(s) for an optimization problem.</p>
+            <h2>1. Open FNC File</h2>
+            <p>Opens up a prompt for the user to select a Function file (.fnc).</p>
+            <h2>2. Generate Contour</h2>
+            <p>Creates a graph of the countor plot for the function.</p>
+            <h2>3. Generate Surface</h2>
+            <p>Creates a graph of the surface plot for the function.</p>
+            <h2>4. Clear</h2>
+            <p>Clear the solution. This cannot be undone.</p>
+            <h2>5. View Graph</h2>
+            <p>Open a separate window that displays the graphed solution.</p>
+        </div>
+        <hr>
+        <div id="sectionGRA">
+            <h1>Gradients</h1>
+            <p>The Gradients tab allows users to generate the gradients for equations.</p>
+            <h2>1. Open FNC File</h2>
+            <p>Opens up a prompt for the user to select a Function file (.fnc).</p>
+            <h2>2. Generate Blank Template</h2>
+            <p>Creates a blank template for users to manually enter information about the optimization problem.</p>
+            <h2>3. Generate Gradients</h2>
+            <p>Uses the FNC file data (whether imported from a file or manually created) and calculates the gradients. NOTE: This will not work of any functions use <code>EXP</code> or <code>ABS</code> as these mathematical functions make calculating gradients impossible currently.</p>
+        </div>
+        <hr>
+        <div id="sectionDOEf">
+            <h1>Design of Experiment (DOE) Files</h1>
+            <h2 class="section-title">1. Introduction</h2>
+            <p>DOE files are used to define the factorial design of an optimization problem including the data points, variables, design levels, and functions. This section describes the syntax and structure of a DOE file.</p>
+
+            <h2 class="section-title">2. Comments</h2>
+            <p>Any line starting with <code>#</code> will be considered a comment and ignored by the software.</p>
+
+            <h2 class="section-title">3. Required Variables</h2>
+            <p>The number of points, variables, levels, and functions all must be defined. This information must be in the first line of the file (not including comment lines) and be separated by spaces. The number of spaces is irrelevant. For example:</p>
+            <div class="code-block"># NUM_POINTS    NUM_VARS    NUM_LEVELS    NUM_FUNCS<br>      27            3           3            2</div>
+
+            <h2 class="section-title">4. Design Matrix</h2>
+            <p>The design matrix must be defined next. The number of lines of the matrix should match the number of points defined earlier. There should be twice the number of variables (normalized and real) and the number of functions should also match. For example:</p>
+            <div class="code-block">#No.	X1	X2	X3	X1 (real)	X2 (real)	X3 (real)	f1(X)	f2(X)
+#--------------------------------------------------------
+1	-1.0	-1.0	-1.0	-1.0		-3.0		-5.0		0.0	6.0
+2	-1.0	-1.0	0.0	-1.0		-3.0		0.0		0.0	6.5
+3	-1.0	-1.0	1.0	-1.0		-3.0		5.0		0.0	7.0
+4	-1.0	0.0	-1.0	-1.0		0.0		-5.0		0.0	6.5
+5	-1.0	0.0	0.0	-1.0		0.0		0.0		0.0	7.0
+6	-1.0	0.0	1.0	-1.0		0.0		5.0		0.0	7.5
+7	-1.0	1.0	-1.0	-1.0		3.0		-5.0		0.0	7.0
+8	-1.0	1.0	0.0	-1.0		3.0		0.0		0.0	7.5
+9	-1.0	1.0	1.0	-1.0		3.0		5.0		0.0	8.0
+10	0.0	-1.0	-1.0	0.0		-3.0		-5.0		4.0	6.5
+11	0.0	-1.0	0.0	0.0		-3.0		0.0		4.5	7.0
+12	0.0	-1.0	1.0	0.0		-3.0		5.0		5.0	7.5
+13	0.0	0.0	-1.0	0.0		0.0		-5.0		5.0	7.0
+14	0.0	0.0	0.0	0.0		0.0		0.0		5.625	7.5
+15	0.0	0.0	1.0	0.0		0.0		5.0		6.25	8.0
+16	0.0	1.0	-1.0	0.0		3.0		-5.0		6.0	7.5
+17	0.0	1.0	0.0	0.0		3.0		0.0		6.75	8.0
+18	0.0	1.0	1.0	0.0		3.0		5.0		7.5	8.5
+19	1.0	-1.0	-1.0	1.0		-3.0		-5.0		8.0	7.0
+20	1.0	-1.0	0.0	1.0		-3.0		0.0		9.0	7.5
+21	1.0	-1.0	1.0	1.0		-3.0		5.0		10.0	8.0
+22	1.0	0.0	-1.0	1.0		0.0		-5.0		10.0	7.5
+23	1.0	0.0	0.0	1.0		0.0		0.0		11.25	8.0
+24	1.0	0.0	1.0	1.0		0.0		5.0		12.5	8.5
+25	1.0	1.0	-1.0	1.0		3.0		-5.0		12.0	8.0
+26	1.0	1.0	0.0	1.0		3.0		0.0		13.5	8.5
+27	1.0	1.0	1.0	1.0		3.0		5.0		15.0	9.0</div>
+
+            <h2 class="section-title">5. Variable Ranges</h2>
+            <p>The variable ranges must also be defined. There should be a line of each variable declared in the following way:</p>
+            <div class="code-block">VARIABLE: MIN, MAX, *TYPE, *INCREMENT</div>
+            <p>See the following example:</p>
+            <div class="code-block"># Variable Ranges<br>X1:	0.0,	1.0,	REAL,	0.000001<br>X2:	2.0,	3.0,	REAL,	0.000001<br>X3:	4.0,	5.0,	REAL,	0.000001</div>
+
+            <h2 class="section-title">6. Function Definitions</h2>
+            <p>Finally, the function must be defined. The should be a line for each function. See the following example:</p>
+            <div class="code-block"># Function Definitions<br>F1 = X1 * X2 * X3;<br>F2 = X1 + X2 + X3;</div>
+            <h2 class="section-title">7. Full Example</h2>
+            <div class="code-block"># FACTORIAL DESIGN
+#     Number of Data Points:   27            
+#     Number of Variables:     3            
+#     Number of Design Levels: 3            
+#     Number of Functions:     2            
+
+# NUM_POINTS    NUM_VARS    NUM_LEVELS    NUM_FUNCS            
+      27            3           3            2            
+
+#No.	X1	X2	X3	X1 (real)	X2 (real)	X3 (real)	f1(X)	f2(X)
+#--------------------------------------------------------
+1	-1.0	-1.0	-1.0	-1.0		-3.0		-5.0		0.0	6.0
+2	-1.0	-1.0	0.0	-1.0		-3.0		0.0		0.0	6.5
+3	-1.0	-1.0	1.0	-1.0		-3.0		5.0		0.0	7.0
+4	-1.0	0.0	-1.0	-1.0		0.0		-5.0		0.0	6.5
+5	-1.0	0.0	0.0	-1.0		0.0		0.0		0.0	7.0
+6	-1.0	0.0	1.0	-1.0		0.0		5.0		0.0	7.5
+7	-1.0	1.0	-1.0	-1.0		3.0		-5.0		0.0	7.0
+8	-1.0	1.0	0.0	-1.0		3.0		0.0		0.0	7.5
+9	-1.0	1.0	1.0	-1.0		3.0		5.0		0.0	8.0
+10	0.0	-1.0	-1.0	0.0		-3.0		-5.0		4.0	6.5
+11	0.0	-1.0	0.0	0.0		-3.0		0.0		4.5	7.0
+12	0.0	-1.0	1.0	0.0		-3.0		5.0		5.0	7.5
+13	0.0	0.0	-1.0	0.0		0.0		-5.0		5.0	7.0
+14	0.0	0.0	0.0	0.0		0.0		0.0		5.625	7.5
+15	0.0	0.0	1.0	0.0		0.0		5.0		6.25	8.0
+16	0.0	1.0	-1.0	0.0		3.0		-5.0		6.0	7.5
+17	0.0	1.0	0.0	0.0		3.0		0.0		6.75	8.0
+18	0.0	1.0	1.0	0.0		3.0		5.0		7.5	8.5
+19	1.0	-1.0	-1.0	1.0		-3.0		-5.0		8.0	7.0
+20	1.0	-1.0	0.0	1.0		-3.0		0.0		9.0	7.5
+21	1.0	-1.0	1.0	1.0		-3.0		5.0		10.0	8.0
+22	1.0	0.0	-1.0	1.0		0.0		-5.0		10.0	7.5
+23	1.0	0.0	0.0	1.0		0.0		0.0		11.25	8.0
+24	1.0	0.0	1.0	1.0		0.0		5.0		12.5	8.5
+25	1.0	1.0	-1.0	1.0		3.0		-5.0		12.0	8.0
+26	1.0	1.0	0.0	1.0		3.0		0.0		13.5	8.5
+27	1.0	1.0	1.0	1.0		3.0		5.0		15.0	9.0
+
+# Variable Ranges
+X1:	0.0,	1.0,	REAL,	0.000001
+X2:	2.0,	3.0,	REAL,	0.000001
+X3:	4.0,	5.0,	REAL,	0.000001
+
+# Function Definitions
+F1 = X1 * X2 * X3;
+F2 = X1 + X2 + X3;</div>
+        </div>
+        <hr>
+        <div id="sectionFNFf">
+            <h1>Function (FNC) Files</h1>
+            <h2 class="section-title">1. Introduction</h2>
+            <p>FNC files are used to define optimization problems, including the variables, objective functions, and constraints. This section describes the syntax and structure of an FNC file.</p>
+
+            <h2 class="section-title">2. Comments</h2>
+            <p>Any line starting with <code>#</code> will be considered a comment and ignored by the software.</p>
+
+            <h2 class="section-title">3. Variable Definitions</h2>
+            <p>Variables must be declared in the following way:</p>
+            <div class="code-block">VARIABLE: MIN, MAX, *TYPE, *INCREMENT</div>
+            <p>For example:</p>
+            <div class="code-block">X1: 3.0, 7.0, REAL, 0.000001</div>
+            <p><code>TYPE</code> and <code>INCREMENT</code> are optional, and as of the current version of PyPROE, they do not affect the program in any way. The variable's name is crucial to its functionality. Variables must be named in the following sequence:</p>
+            <div class="code-block">X1, X2, X3 ...</div>
+
+            <h2 class="section-title">4. Objective Functions & Constraints</h2>
+            <p>Objective functions should be defined as in the example below:</p>
+            <div class="code-block">O1 = F1;</div>
+            <p>Objectives should be declared sequentially, starting with O1.</p>
+            <p>Equality and inequality constraints should be defined as in the examples below:</p>
+            <div class="code-block">EC1 = F1;<br>INEC1 = F1;</div>
+            <p><b>IMPORTANT NOTE</b>: be sure to include the semicolon <code>;</code> after the end of each declaration.</p>
+            <h2 class="section-title">5. Function Definitions</h2>
+            <p>Function definitions are similar to the objective functions and constraints. For example:</p>
+            <div class="code-block">F1 = X1^2;</div>
+            <p>Again, please make sure there is a semicolon at the end of the function definition. This format allows for multiple lines, so if there is no semicolon at the end, the program will look to add the next line to the function. Also, make sure your equation is defined explicitly. For example, 5x will cause an error. Make sure that you define it as: <code>5 * x</code>.</p>
+            <p>The following special functions are supported in PyPROE:</p>
+            <ul>
+                <li>ABS</li>
+                <li>POW</li>
+                <li>LOG</li>
+                <li>LN</li>
+                <li>SIN / ASIN / SINH</li>
+                <li>COS / ACOS / COSH</li>
+                <li>TAN / ATAN / TANH</li>
+                <li>SQRT</li>
+                <li>CEIL</li>
+                <li>FLOOR</li>
+                <li>EXP</li>
+            </ul>
+
+            <h2 class="section-title">6. Gradients</h2>
+            <p>To define a gradient function in PyPROE, you need to use the following format:</p>
+        
+            <div class="code-block">G + FUNCTION_NAME + either '-' or '_' + VARIABLE_NAME = ...;</div>
+        
+            <p>The <code>FUNCTION_NAME</code> is the name of the function (e.g., <code>F1</code>), and the <code>VARIABLE_NAME</code> is the variable with respect to which the gradient is being calculated (e.g., <code>X1</code>).</p>
+            
+            <p>Complete example:</p>
+            <div class="code-block">GF1_X1 = ...;<br>GF1-X1 = ...;</div>
+
+            <h2 class="section-title">7. Troubleshooting</h2>
+            <ul>
+                <!-- <li>Make sure that all sections (except gradients) list the number of items in that section. I.e. <code>*VARIABLES: 2</code></li> -->
+                <li>Make sure there is a semi-colon <code>;</code> after each definition.</li>
+                <li>Make sure that any multiplication is explicitly defined. I.e., 5x is defined as <code>5 * x</code>.</li>
+                <li>Make sure that any lines meant to be comments start with <code>#</code>.</li>
+            </ul>
+
+            <h2 class="section-title">8. Full Example</h2>
+            <p>Here is a complete example of an FNC file:</p>
+            <div class="code-block"># Example.fnc
+
+*VARIABLE
+X1: 0,  5,  REAL,   0.000001
+X2: 0,  3,  REAL,   0.000001
+
+*OBJECTIVE
+O1 = F1;
+O2 = F2;
+
+*EQUALITY-CONSTRAINT
+
+*INEQUALITY-CONSTRAINT
+INEC1 = F3;
+INEC2 = F4;
+
+*FUNCTION
+F1 = 4 * X1^2 + 4 * X2^2;
+F2 = (X1 - 5)^2 + (X2 - 5)^2;
+F3 = (X1 - 5)^2 + X2^2 - 25;
+F4 = -(X1 - 8)^2 - (X2 + 3)^2 + 7.7;
+
+*GRADIENT
+GF1_X1 = 8*X1;
+GF1_X2 = 8*X2;
+
+GF2_X1 = 2*X1 - 10;
+GF2_X2 = 2*X2 - 10;
+
+GF3_X1 = 2*X1 - 10;
+GF3_X2 = 2*X2;
+
+GF4_X1 = 16 - 2*X1;
+GF4_X2 = -2*X2 - 6;</div>
+        </div>
+        <hr>
+        <div id="sectionCMD">
+            <h1>Shortcuts</h1>
+            <h2>CTRL+T</h2>
+            <p>Open the settings.</p>
+            <h2>CTRL+F</h2>
+            <p>Toggle fullscreen.</p>
+            <h2>ESC</h2>
+            <p>Exit fullscreen.</p>
+            <h2>CTRL+Q</h2>
+            <p>Exit application.</p>
+            <h2>CTRL+O</h2>
+            <p>Open file.</p>
+            <h2>CTRL+S</h2>
+            <p>Save file.</p>
+            <h2>CTRL+LEFT_ARROW</h2>
+            <p>Move focus one tab to the left.</p>
+            <h2>CTRL+RIGHT_ARROW</h2>
+            <p>Move focus one tab to the right.</p>
+            <h2>CTRL+[1-7]</h2>
+            <p>Move focus to certain tab. 1 - Design of Experiements, 2 - Metamodeling, etc.</p>
+            <h2>CTRL+M</h2>
+            <p>Open up Developer Console. Only use if you know what you are doing.</p>
+        </div>
+    </body>
+</html>
