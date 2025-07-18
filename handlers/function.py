@@ -8,8 +8,7 @@ def find_highest_x(expression, prefix='x'):
     matches = re.findall(rf'{prefix}(\d+)', expression)
     # Convert matches to integers and find the maximum
     if matches:
-        highest = max(int(num) for num in matches)
-        return highest
+        return max(int(num) for num in matches)
     return 0
 
 def create_function_from_string(equation_str: str) -> callable:
@@ -63,5 +62,5 @@ class Function:
     def __create_callable(self, function: str):
         return create_function_from_string(clean(function))
 
-    def __str__(self):
-        return self.text
+    def __repr__(self):
+        return f"{self.name} = {self.text}"
