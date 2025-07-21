@@ -1,6 +1,44 @@
 from __future__ import annotations
 from handlers.function import Function
 
+import re
+import numpy as np
+
+from sympy import (
+    sin, cos, tan, cot, sec, csc,
+    asin, acos, atan,
+    sinh, cosh, tanh, asinh, acosh, atanh,
+    exp, log, ln,
+    sqrt, Abs, pi,
+    Sum, symbols, sympify, diff, lambdify
+)
+
+locals = {
+    'sin': sin, 'cos': cos, 'tan': tan,
+    'cot': cot, 'sec': sec, 'csc': csc,
+    'asin': asin, 'acos': acos, 'atan': atan,
+    'sinh': sinh, 'cosh': cosh, 'tanh': tanh,
+    'asinh': asinh, 'acosh': acosh, 'atanh': atanh,
+    'exp': exp, 'log': log, 'ln': ln,
+    'sqrt': sqrt, 'abs': Abs,
+    'sum': Sum, 'pi': pi
+}
+    
+def get_expr(func_str: str, vars: list):
+    x_vars = symbols(' '.join(vars))
+
+    # Build a locals dictionary that includes all valid variable names
+    local_dict = {f'{vars[i]}': x_vars[i] for i in range(len(vars))}
+    # Add functions explicitly used in math
+    local_dict.update(locals)
+
+    try:
+        expr = sympify(func_str.lower(), locals=local_dict)
+        return expr
+    except Exception as e:
+        raise ValueError(f"Failed to parse function string: {e}")
+
+    return None
 
 class Variable:
     def __init__(self, _symbol, _min: float, _max: float, _type, _increment: float=1e-6):
@@ -77,3 +115,38 @@ class Node:
         for child in self.children:
             result += repr(child)
         return result
+
+class Function:
+    def __init__(self, name: str, function: str, variables: list):
+        self.name = name
+        self.text = function
+
+        # Detect variable names using sympy
+        self.expr = get_expr(function, [v.lower() for v in variables])
+        self.variables = sorted(self.expr.free_symbols, key=lambda s: str(s))  # sorted list of symbols
+
+        # Create fast evaluation function
+        self.fast_func = lambdify(self.variables, self.expr, modules='numpy')
+
+    def eval(self, value_dict: dict) -> float:
+        """
+        Evaluate symbolically using sympy with a dict of values.
+        Example: value_dict = {'x': 1.5, 'y': 2}
+        """
+        return self.expr.evalf(subs=value_dict)
+
+    def fast_eval(self, value_dict: dict) -> float:
+        """
+        Evaluate numerically using numpy-lambdified function.
+        The dict must contain all required variable names.
+        """
+        # Match ordering to self.variables
+        args = [value_dict[str(var)] for var in self.variables]
+        return self.fast_func(*args)
+    
+    def __call__(self, value_dict: dict) -> float:
+        return self.fast_eval(value_dict=value_dict)
+
+    def __repr__(self):
+        return f"{self.name} = {self.text}"
+
