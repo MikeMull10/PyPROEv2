@@ -10,7 +10,8 @@ from sympy import (
     sinh, cosh, tanh, asinh, acosh, atanh,
     exp, log, ln,
     sqrt, Abs, pi,
-    Sum, symbols, sympify, diff, lambdify
+    Sum, symbols, sympify, lambdify,
+    diff, im, Derivative, re, sign
 )
 
 locals = {
@@ -21,11 +22,13 @@ locals = {
     'asinh': asinh, 'acosh': acosh, 'atanh': atanh,
     'exp': exp, 'log': log, 'ln': ln,
     'sqrt': sqrt, 'abs': Abs,
-    'sum': Sum, 'pi': pi
+    'sum': Sum, 'pi': pi,
+    'im': im, 'Derivative': Derivative, 're': re,
+    'sign': sign,
 }
     
 def get_expr(func_str: str, vars: list):
-    x_vars = symbols(' '.join(vars))
+    x_vars = symbols(' '.join(vars), real=True)
 
     # Build a locals dictionary that includes all valid variable names
     local_dict = {f'{vars[i]}': x_vars[i] for i in range(len(vars))}
@@ -37,8 +40,6 @@ def get_expr(func_str: str, vars: list):
         return expr
     except Exception as e:
         raise ValueError(f"Failed to parse function string: {e}")
-
-    return None
 
 class Variable:
     def __init__(self, _symbol, _min: float, _max: float, _type, _increment: float=1e-6):
@@ -68,9 +69,18 @@ class Constraint:
         self.symbol   = _symbol
         self.function = _function
 
+class BasicFunction:
+    def __init__(self, name: str, function: str):
+        self.name = name
+        self.text = function
+        self.level = -1
+    
+    def __repr__(self):
+        return f"{self.level} | {self.name} = {self.text}"
+
 #TODO: Handle F1 vs F11 etc
 class Node:
-    def __init__(self, value: str, parent: Node, functions: list[Function]):
+    def __init__(self, value: str, parent: Node, functions: list[BasicFunction]):
         self.value: str = value
         self.parent: Node = parent
         self.children: list[Node] = []
@@ -117,9 +127,13 @@ class Node:
         return result
 
 class Function:
+    registry = {}
+
     def __init__(self, name: str, function: str, variables: list):
         self.name = name
         self.text = function
+
+        locals.update({fname: f.expr for fname, f in Function.registry.items()})
 
         # Detect variable names using sympy
         self.expr = get_expr(function, [v.lower() for v in variables])
@@ -127,6 +141,8 @@ class Function:
 
         # Create fast evaluation function
         self.fast_func = lambdify(self.variables, self.expr, modules='numpy')
+
+        Function.registry[name] = self
 
     def eval(self, value_dict: dict) -> float:
         """
@@ -143,6 +159,9 @@ class Function:
         # Match ordering to self.variables
         args = [value_dict[str(var)] for var in self.variables]
         return self.fast_func(*args)
+    
+    def gradients(self):
+        return [diff(self.expr, v) for v in self.variables]
     
     def __call__(self, value_dict: dict) -> float:
         return self.fast_eval(value_dict=value_dict)

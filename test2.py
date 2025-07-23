@@ -2,17 +2,15 @@ from testing.fnc_objects import Function
 import timeit
 
 if __name__ == "__main__":
-    eq = "sum(x1 + x2, (i, 1, 2))"
-    vs = ["X1", "X2"]
+    f1_str = "x1 * x2"
+    f2_str = "F1"
 
-    f = Function("F1", eq, vs)
-    vals = {'x1': 2.0, 'x2': 3.0}
-    print(f)
-    print(f.eval(vals))
-    print(f.fast_eval(vals))
+    f1 = Function("f1", "x1 * x2", ["x1", "x2"])
+    f2 = Function("f2", "f1 ** 2", ["x1", "x2"])
 
-    slow = timeit.timeit(lambda: f.eval(vals), number=1000)
-    fast = timeit.timeit(lambda: f.fast_eval(vals), number=1000)
+    print(f1)
+    print(f2)
 
-    print(f"Sympy time: {slow:.5f}s")
-    print(f"Numpy exec function time: {fast:.5f}s")
+    vals = {"x1": 2, "x2": 3}
+    print(f1.name, "→", f1(vals))  # 6
+    print(f2.name, "→", f2(vals))  # 36

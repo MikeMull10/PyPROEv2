@@ -1,7 +1,7 @@
 import re
 from pprint import pprint as pp
 
-from testing.fnc_objects import Variable, Constant, Objective, Constraint, Function
+from testing.fnc_objects import Variable, Constant, Objective, Constraint, Function, BasicFunction, Node
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,6 +22,34 @@ def clean_data(lines: list[str]):
     
     return ret
 
+def split_functions(text):
+    lines = text.splitlines()
+    functions = []
+    current = ""
+    paren_count = 0
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        current += " " + line
+        paren_count += line.count('(') - line.count(')')
+
+        # If we have balanced parentheses and a semicolon at the end, split
+        if paren_count == 0 and ';' in line:
+            parts = current.split(';')
+            for p in parts[:-1]:
+                if p.strip():
+                    functions.append(p.strip())
+            current = parts[-1].strip()  # Remaining partial expression
+
+    # Any leftover (without semicolon) — treat as incomplete but add anyway
+    if current.strip():
+        functions.append(current.strip())
+
+    return functions
+
 class InputFile:
     def __init__(self, input_str: str, is_file: bool=True, check_nums: bool=True):
         self.file_str   = input_str
@@ -31,7 +59,13 @@ class InputFile:
         self.error:        bool = False
         self.error_message: str = ""
 
-        self.variables, self.constants, self.objectives, self.equality_constraints, self.inequality_constraints, self.functions, self.gradients = [[] for _ in range(len(SECTIONS))]
+        self.variables: list[Variable] = []
+        self.constants: list[Constant] = []
+        self.objectives: list[Function] = []
+        self.equality_constraints: list[Function] = []
+        self.inequality_constraints: list[Function] = []
+        self.functions: list[Function] = []
+        self.gradients: list[Function] = []
         self.__read_data()
 
     def __str__(self) -> str:
@@ -51,8 +85,6 @@ class InputFile:
                 return
         else:
             data = clean_data(self.file_str)
-
-        logging.debug(data)
 
         flag = -1
         saved = {k: 0 for k in SECTIONS}
@@ -115,7 +147,65 @@ class InputFile:
                 self.error = True
                 self.error_message = f"Malformed constant: '{con}'"
                 return
+            
+        ### FUNCTIONS
+        if self.check_nums and len(self._functions) != saved["FUNCTION"]:
+            self.error = True
+            self.error_message = f"Incorrect number of components for FUNCTION. Have {len(self._functions)} expected {saved["FUNCTION"]}."
+            return
+
+        funcs = split_functions("\n".join(self._functions))
+        basic_funcs: list[BasicFunction] = []
+        for fun in funcs:
+            k, v = fun.split('=')
+            basic_funcs.append(BasicFunction(k.strip(), v.strip()))
+
+        for basic in basic_funcs:
+            node = Node(basic.name, None, basic_funcs)
+            if node.error_exists():
+                self.error = True
+                self.error_message = f"Circular function found in: {basic.name}"
+                return
+
+            basic.level = node.find_max()
         
-        ### OBJECTIVE FUNCTION
-        for obj in self._objectives:
-            pass
+        for func in sorted(basic_funcs, key=lambda x: x.level):
+            self.functions.append(Function(func.name.lower(), func.text, [var.symbol for var in self.variables]))
+
+        if len(self.functions) == 0:
+            self.error = True
+            self.error_message = "No functions."
+            return
+        
+        ### OBJECTIVE FUNCTIONs
+        if self.check_nums and len(self._functions) != saved["OBJECTIVE"]:
+            self.error = True
+            self.error_message = f"Incorrect number of components for OBJECTIVE. Have {len(self._objectives)} expected {saved["OBJECTIVE"]}."
+            return
+
+        funcs = split_functions("\n".join(self._objectives))
+        basic_objs: list[BasicFunction] = []
+        for obj in basic_objs:
+            node = Node(obj.name, None, basic_objs + basic_funcs)
+            if node.error_exists():
+                self.error = True
+                self.error_message = f"Circular objective function found in: {obj.name}"
+                return
+            
+            obj.level = node.find_max()
+        
+        for obj in sorted(basic_objs, key=lambda x: x.level):
+            self.objectives.append(Function(obj.name.lower(), obj.text, [var.symbol for var in self.variables]))
+
+        if len(self.objectives) == 0:
+            self.error = True
+            self.error_message = "No objectives."
+            return
+        
+        ### EQUALITY-CONSTRAINTS
+        for eq in self._equality_constraints:
+            print(eq)
+
+        ### INEQUALITY-CONSTRAINTS
+        for ineq in self._inequality_constraints:
+            print(ineq)

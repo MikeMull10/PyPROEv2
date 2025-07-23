@@ -7,7 +7,10 @@ if __name__ == "__main__":
     fmt = '[%(levelname)s] %(asctime)s %(message)s'
     logging.basicConfig(level=level, format=fmt)
     # f = InputFile("testing/381-HW#4.fnc")
-    # print(f)
+    f = InputFile("testing/Test.fnc")
+    print(f)
+
+    exit()
 
     funcs = {
         "F1": "F2",
