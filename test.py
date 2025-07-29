@@ -10,20 +10,6 @@ if __name__ == "__main__":
     f = InputFile("testing/Test.fnc")
     print(f)
 
-    exit()
-
-    funcs = {
-        "F1": "F2",
-        "F2": "F3 + F4",
-        "F3": "G1",
-        "F4": "G1",
-        "G1": "F1"
-    }
-
-    real_funcs = [Function(k, v) for (k, v) in funcs.items()]
-    print(real_funcs)
-
-    first = Node("F1", None, real_funcs)
-    print(first)
-    print(first.find_max())
-    print(first.error_exists())
+    for function in f.functions:
+        if function.name == "f4":
+            print(f"{function.fast_eval({'x1': 1, 'x2': 2, 'x3': 3})=}")

@@ -4,10 +4,11 @@
 #-----------------------------------------------------------------------
 
         
-*VARIABLE: 2
+*VARIABLE: 3
 
 X1:	0.02,	0.06,	REAL,	0.000001
 X2:	0.002,	0.008,	REAL,	0.000001
+X3: 0, 0
 
 *CONSTANT: 1
 k = 5;
@@ -22,13 +23,14 @@ O1 = F1;
 *INEQUALITY-CONSTRAINT: 2
 
 INEC1 = F2;
-#INEC2 = F3;
+INEC2 = F3;
 
 *FUNCTION: 4
 F2 = x1 + x2;
 F1 = F2 ** 2;
 F3 = Sum(x1, (i, 0, 2));
 F4 = x1 * k;
+#F5 = Sum(x[i], (i, 1, 3));
 
 # Gradient function-variable combinations are missing:
 #	GF1 (UDF)-X1

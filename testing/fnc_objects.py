@@ -11,7 +11,8 @@ from sympy import (
     exp, log, ln,
     sqrt, Abs, pi,
     Sum, symbols, sympify, lambdify,
-    diff, im, Derivative, re, sign, E
+    diff, im, Derivative, re, sign, E,
+    IndexedBase
 )
 
 locals = {
@@ -33,6 +34,12 @@ def get_expr(func_str: str, vars: list, constants: dict = None):
     # Build a locals dictionary that includes all valid variable names
     local_dict = {f'{vars[i]}': x_vars[i] for i in range(len(vars))}
 
+    # Allow indexing (i.e. x[i])
+    # local_dict.update({
+    #     'x': IndexedBase('x'),
+    #     'i': symbols('i', integer=True)
+    # })
+
     if constants:
         local_dict.update(constants)
     
@@ -43,6 +50,7 @@ def get_expr(func_str: str, vars: list, constants: dict = None):
         expr = sympify(func_str.lower(), locals=local_dict)
         return expr
     except Exception as e:
+        print(func_str)
         raise ValueError(f"Failed to parse function string: {e}")
 
 class Variable:
@@ -141,13 +149,6 @@ class Function:
 
     def eval(self, value_dict: dict) -> float:
         """
-        Evaluate symbolically using sympy with a dict of values.
-        Example: value_dict = {'x': 1.5, 'y': 2}
-        """
-        return self.expr.evalf(subs=value_dict)
-
-    def fast_eval(self, value_dict: dict) -> float:
-        """
         Evaluate numerically using numpy-lambdified function.
         The dict must contain all required variable names.
         """
@@ -159,7 +160,7 @@ class Function:
         return [diff(self.expr, v) for v in self.variables]
     
     def __call__(self, value_dict: dict) -> float:
-        return self.fast_eval(value_dict=value_dict)
+        return self.eval(value_dict=value_dict)
 
     def __repr__(self):
         return f"{self.name} = {self.text}"
