@@ -24,10 +24,11 @@ O1 = F1;
 INEC1 = F2;
 #INEC2 = F3;
 
-*FUNCTION: 3
+*FUNCTION: 4
 F2 = x1 + x2;
 F1 = F2 ** 2;
 F3 = Sum(x1, (i, 0, 2));
+F4 = x1 * k;
 
 # Gradient function-variable combinations are missing:
 #	GF1 (UDF)-X1

@@ -1,7 +1,7 @@
 import re
 from pprint import pprint as pp
 
-from testing.fnc_objects import Variable, Constant, Objective, Constraint, Function, BasicFunction, Node
+from testing.fnc_objects import Variable, Constant, Function, BasicFunction, Node
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,7 +22,7 @@ def clean_data(lines: list[str]):
     
     return ret
 
-def split_functions(text):
+def split_functions(text: str):
     lines = text.splitlines()
     functions = []
     current = ""
@@ -106,13 +106,23 @@ class InputFile:
                 dataset[flag].append(line)
         
         self._variables, self._constants, self._objectives, self._equality_constraints, self._inequality_constraints, self._functions, self._gradients = dataset
-        
-        ### VARIABLES
-        if self.check_nums and len(self._variables) != saved["VARIABLE"]:
-            self.error = True
-            self.error_message = f"Incorrect number of components for VARIABLE. Have {len(self._variables)} expected {saved["VARIABLE"]}."
-            return
 
+        ### Checks
+        if self.check_nums:
+            if len(self._variables) != saved["VARIABLE"]:
+                self.error = True
+                self.error_message = f"Incorrect number of components for VARIABLE. Have {len(self._variables)} expected {saved["VARIABLE"]}."
+                return
+            elif len(self._functions) != saved["FUNCTION"]:
+                self.error = True
+                self.error_message = f"Incorrect number of components for FUNCTION. Have {len(self._functions)} expected {saved["FUNCTION"]}."
+                return
+            elif len(self._objectives) != saved["OBJECTIVE"]:
+                self.error = True
+                self.error_message = f"Incorrect number of components for OBJECTIVE. Have {len(self._objectives)} expected {saved["OBJECTIVE"]}."
+                return
+
+        ### VARIABLES
         for var in self._variables:
             try:
                 d = [v.strip() for v in var.split(':')[ 1 ].split(',')]
@@ -149,16 +159,23 @@ class InputFile:
                 return
             
         ### FUNCTIONS
-        if self.check_nums and len(self._functions) != saved["FUNCTION"]:
-            self.error = True
-            self.error_message = f"Incorrect number of components for FUNCTION. Have {len(self._functions)} expected {saved["FUNCTION"]}."
-            return
+        funs: list[str] = split_functions("\n".join(self._functions))
+        objs: list[str] = split_functions("\n".join(self._objectives))
+        eqcs: list[str] = split_functions("\n".join(self._equality_constraints))
+        inqs: list[str] = split_functions("\n".join(self._inequality_constraints))
 
-        funcs = split_functions("\n".join(self._functions))
+        function_type_dict = {
+            'fun': [f.split('=')[0].strip().lower() for f in funs],
+            'obj': [f.split('=')[0].strip().lower() for f in objs],
+            'eqc': [f.split('=')[0].strip().lower() for f in eqcs],
+            'iqc': [f.split('=')[0].strip().lower() for f in inqs],
+        }
+
         basic_funcs: list[BasicFunction] = []
-        for fun in funcs:
-            k, v = fun.split('=')
-            basic_funcs.append(BasicFunction(k.strip(), v.strip()))
+        for function_type in [funs, objs, eqcs, inqs]:
+            for fun in function_type:
+                k, v = fun.split('=')
+                basic_funcs.append(BasicFunction(k.strip(), v.strip()))
 
         for basic in basic_funcs:
             node = Node(basic.name, None, basic_funcs)
@@ -169,43 +186,18 @@ class InputFile:
 
             basic.level = node.find_max()
         
+        function_constants = {con.symbol: con.value for con in self.constants}
         for func in sorted(basic_funcs, key=lambda x: x.level):
-            self.functions.append(Function(func.name.lower(), func.text, [var.symbol for var in self.variables]))
+            for function_type, array in zip(['fun', 'obj', 'eqc', 'iqc'], [self.functions, self.objectives, self.equality_constraints, self.inequality_constraints]):
+                if func.name.lower() in function_type_dict[function_type]:
+                    array.append(Function(func.name.lower(), func.text, [var.symbol for var in self.variables], function_constants))
 
         if len(self.functions) == 0:
             self.error = True
             self.error_message = "No functions."
             return
-        
-        ### OBJECTIVE FUNCTIONs
-        if self.check_nums and len(self._functions) != saved["OBJECTIVE"]:
-            self.error = True
-            self.error_message = f"Incorrect number of components for OBJECTIVE. Have {len(self._objectives)} expected {saved["OBJECTIVE"]}."
-            return
 
-        funcs = split_functions("\n".join(self._objectives))
-        basic_objs: list[BasicFunction] = []
-        for obj in basic_objs:
-            node = Node(obj.name, None, basic_objs + basic_funcs)
-            if node.error_exists():
-                self.error = True
-                self.error_message = f"Circular objective function found in: {obj.name}"
-                return
-            
-            obj.level = node.find_max()
-        
-        for obj in sorted(basic_objs, key=lambda x: x.level):
-            self.objectives.append(Function(obj.name.lower(), obj.text, [var.symbol for var in self.variables]))
-
-        if len(self.objectives) == 0:
+        elif len(self.objectives) == 0:
             self.error = True
             self.error_message = "No objectives."
             return
-        
-        ### EQUALITY-CONSTRAINTS
-        for eq in self._equality_constraints:
-            print(eq)
-
-        ### INEQUALITY-CONSTRAINTS
-        for ineq in self._inequality_constraints:
-            print(ineq)

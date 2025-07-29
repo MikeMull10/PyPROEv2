@@ -11,7 +11,7 @@ from sympy import (
     exp, log, ln,
     sqrt, Abs, pi,
     Sum, symbols, sympify, lambdify,
-    diff, im, Derivative, re, sign
+    diff, im, Derivative, re, sign, E
 )
 
 locals = {
@@ -24,14 +24,18 @@ locals = {
     'sqrt': sqrt, 'abs': Abs,
     'sum': Sum, 'pi': pi,
     'im': im, 'Derivative': Derivative, 're': re,
-    'sign': sign,
+    'sign': sign, 'e': E,
 }
     
-def get_expr(func_str: str, vars: list):
+def get_expr(func_str: str, vars: list, constants: dict = None):
     x_vars = symbols(' '.join(vars), real=True)
 
     # Build a locals dictionary that includes all valid variable names
     local_dict = {f'{vars[i]}': x_vars[i] for i in range(len(vars))}
+
+    if constants:
+        local_dict.update(constants)
+    
     # Add functions explicitly used in math
     local_dict.update(locals)
 
@@ -54,20 +58,10 @@ class Variable:
 class Constant:
     def __init__(self, _symbol: str, _value: float):
         self.symbol = _symbol
-        self.value  = _value
+        self.value  = float(_value)
     
     def __repr__(self):
         return f"{self.symbol}: {self.value}"
-
-class Objective:
-    def __init__(self, _symbol: str, _value: str):
-        self.symbol = _symbol
-        self.value  = _value
-
-class Constraint:
-    def __init__(self, _symbol: str, _function: Function):
-        self.symbol   = _symbol
-        self.function = _function
 
 class BasicFunction:
     def __init__(self, name: str, function: str):
@@ -129,14 +123,15 @@ class Node:
 class Function:
     registry = {}
 
-    def __init__(self, name: str, function: str, variables: list):
-        self.name = name
-        self.text = function
+    def __init__(self, name: str, function: str, variables: list, constants: dict=None):
+        self.name = name.lower()
+        self.text = function.lower()
+        self.constants = constants or {}
 
         locals.update({fname: f.expr for fname, f in Function.registry.items()})
 
         # Detect variable names using sympy
-        self.expr = get_expr(function, [v.lower() for v in variables])
+        self.expr = get_expr(function, [v.lower() for v in variables], constants=self.constants)
         self.variables = sorted(self.expr.free_symbols, key=lambda s: str(s))  # sorted list of symbols
 
         # Create fast evaluation function
