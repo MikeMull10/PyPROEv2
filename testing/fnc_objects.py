@@ -1,9 +1,10 @@
 from __future__ import annotations
 from handlers.function import Function
 
-import re
+import re as regex
 import numpy as np
 
+from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 from sympy import (
     sin, cos, tan, cot, sec, csc,
     asin, acos, atan,
@@ -11,8 +12,7 @@ from sympy import (
     exp, log, ln,
     sqrt, Abs, pi,
     Sum, symbols, sympify, lambdify,
-    diff, im, Derivative, re, sign, E,
-    IndexedBase
+    diff, im, Derivative, re, sign, E, N
 )
 
 locals = {
@@ -27,18 +27,30 @@ locals = {
     'im': im, 'Derivative': Derivative, 're': re,
     'sign': sign, 'e': E,
 }
+
+def replace_isum(match: regex.Match):
+    expr = match.group(1)  # mathmatical expression
+    var  = match.group(2)  # index variable
+    start= match.group(3)  # min
+    end  = match.group(4)  # max
+
+    ret = []
+    for i in range(int(start), int(end) + 1):
+        ret.append(expr.replace(f"[{var}]", str(i)))
     
+    return ' + '.join(ret)
+
+def prepare_function(func_str: str):
+    # Handle iSum
+    pattern = r"(?i)iSum\s*\(\s*(.+?)\s*,\s*\(\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*\)\s*\)"
+
+    return regex.sub(pattern, replace_isum, func_str, flags=regex.IGNORECASE)
+
 def get_expr(func_str: str, vars: list, constants: dict = None):
     x_vars = symbols(' '.join(vars), real=True)
 
     # Build a locals dictionary that includes all valid variable names
     local_dict = {f'{vars[i]}': x_vars[i] for i in range(len(vars))}
-
-    # Allow indexing (i.e. x[i])
-    # local_dict.update({
-    #     'x': IndexedBase('x'),
-    #     'i': symbols('i', integer=True)
-    # })
 
     if constants:
         local_dict.update(constants)
@@ -47,11 +59,10 @@ def get_expr(func_str: str, vars: list, constants: dict = None):
     local_dict.update(locals)
 
     try:
-        expr = sympify(func_str.lower(), locals=local_dict)
+        expr = sympify(prepare_function(func_str).lower(), locals=local_dict)
         return expr
     except Exception as e:
-        print(func_str)
-        raise ValueError(f"Failed to parse function string: {e}")
+        raise ValueError(f"Failed to parse function string: {e}.")
 
 class Variable:
     def __init__(self, _symbol, _min: float, _max: float, _type, _increment: float=1e-6):
@@ -64,12 +75,29 @@ class Variable:
         return f"{self.symbol}: ({self.min}, {self.max}), {self.type}, {self.increment}"
 
 class Constant:
-    def __init__(self, _symbol: str, _value: float):
+    def __init__(self, _symbol: str, _value_expr):
         self.symbol = _symbol
-        self.value  = float(_value)
-    
+        self.expr = None
+        self.value = None
+
+        # Allow implicit multiplication (e.g., 2pi)
+        transformations = (standard_transformations + (implicit_multiplication_application,))
+
+        try:
+            # If _value_expr is a number already, just store it
+            if isinstance(_value_expr, (int, float)):
+                self.value = float(_value_expr)
+                self.expr = self.value
+            else:
+                # Try sympify string expressions
+                self.expr = parse_expr(_value_expr, transformations=transformations)
+                self.value = float(N(self.expr))
+        except Exception as e:
+            print(e)
+            raise ValueError(f"Failed to parse expression '{_value_expr}': {e}")
+
     def __repr__(self):
-        return f"{self.symbol}: {self.value}"
+        return f"{self.symbol} = {self.expr} ≈ {self.value}"
 
 class BasicFunction:
     def __init__(self, name: str, function: str):
@@ -153,7 +181,10 @@ class Function:
         The dict must contain all required variable names.
         """
         # Match ordering to self.variables
-        args = [value_dict[str(var)] for var in self.variables]
+        try:
+            args = [value_dict[str(var)] for var in self.variables]
+        except KeyError as e:
+            raise KeyError(f"Missing variable definition: {e}.")
         return self.fast_func(*args)
     
     def gradients(self):

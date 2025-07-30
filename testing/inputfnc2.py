@@ -148,6 +148,11 @@ class InputFile:
             self.error_message = "No variables."
             return
         
+        if self.check_nums and (len(self._constants)) != saved["CONSTANT"]:
+            self.error = True
+            self.error_message = f"Incorrect number of components for CONSTANT. Have {len(self._constants)} expected {saved["CONSTANT"]}"
+            return
+    
         ### CONSTANTS
         for con in self._constants:
             try:
@@ -159,6 +164,7 @@ class InputFile:
                 return
             
         ### FUNCTIONS
+        #TODO: Check for ';'
         funs: list[str] = split_functions("\n".join(self._functions))
         objs: list[str] = split_functions("\n".join(self._objectives))
         eqcs: list[str] = split_functions("\n".join(self._equality_constraints))
