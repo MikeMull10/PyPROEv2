@@ -148,6 +148,8 @@ class InputFile:
             self.error_message = "No variables."
             return
         
+        self.variables = sorted(self.variables, key=lambda v: v.symbol)
+        
         if self.check_nums and (len(self._constants)) != saved["CONSTANT"]:
             self.error = True
             self.error_message = f"Incorrect number of components for CONSTANT. Have {len(self._constants)} expected {saved["CONSTANT"]}"
@@ -207,3 +209,6 @@ class InputFile:
             self.error = True
             self.error_message = "No objectives."
             return
+    
+    def get_bounds(self):
+        return [np.array([v.min, v.max]) for v in self.variables]

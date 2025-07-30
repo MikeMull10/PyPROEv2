@@ -2,6 +2,8 @@ from testing.inputfnc2 import InputFile
 from testing.fnc_objects import Node, Function, prepare_function
 import logging
 
+from pprint import pprint as pp
+
 if __name__ == "__main__":
     level = logging.DEBUG
     fmt = '[%(levelname)s] %(asctime)s %(message)s'
@@ -15,8 +17,10 @@ if __name__ == "__main__":
     # f = InputFile("testing/381-HW#4.fnc")
     # f = InputFile("testing/Test.fnc")
     f = InputFile("testing/ZDT1.fnc")
-    print(f)
+    # print(f)
+    pp(f.get_bounds())
 
+    exit()
     for function in f.functions:
         if function.name == "f5":
             print(f"{function.eval({'x1': 1, 'x2': 2, 'x3': 3})=}")

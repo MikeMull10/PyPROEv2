@@ -125,14 +125,20 @@ class Node:
                 self.error = True
                 return
 
+        this_func = None
         for f in functions:
             if f.name == self.value:
                 this_func = f.text
         
+        if this_func is None:
+            self.error = True
+            return
+        
         children = []
         for f in functions:
-            if f.name in this_func:
-                children.append(f.name)
+            pattern = r'\b' + regex.escape(f.name) + r'\b'
+            if regex.search(pattern, this_func, flags=regex.IGNORECASE):
+                self.children.append(Node(f.name, self, functions))
         
         for c in children:
             self.children.append(Node(c, self, functions))
@@ -156,10 +162,18 @@ class Node:
             result += repr(child)
         return result
 
+def get_fast_func(expr, vars: list[str]):
+    fast_func = lambdify(vars, expr, modules='numpy')
+
+    def wrapper(x_array):
+        return fast_func(*x_array)
+
+    return wrapper
+
 class Function:
     registry = {}
 
-    def __init__(self, name: str, function: str, variables: list, constants: dict=None):
+    def __init__(self, name: str, function: str[Function], variables: list[str], constants: dict=None):
         self.name = name.lower()
         self.text = function.lower()
         self.constants = constants or {}
@@ -171,28 +185,33 @@ class Function:
         self.variables = sorted(self.expr.free_symbols, key=lambda s: str(s))  # sorted list of symbols
 
         # Create fast evaluation function
-        self.fast_func = lambdify(self.variables, self.expr, modules='numpy')
+        self.fast_func = get_fast_func(self.expr, self.variables)
+        
+        # Gradients
+        self.gradient_exprs = [diff(self.expr, v) for v in self.variables]
+        self.gradient_funcs = [get_fast_func(grad, self.variables) for grad in self.gradient_exprs]
 
         Function.registry[name] = self
 
-    def eval(self, value_dict: dict) -> float:
+    def eval(self, vals: list[float]) -> float:
         """
         Evaluate numerically using numpy-lambdified function.
-        The dict must contain all required variable names.
+        The list must contain all required variable names in alphabetical order (of variables).
         """
-        # Match ordering to self.variables
-        try:
-            args = [value_dict[str(var)] for var in self.variables]
-        except KeyError as e:
-            raise KeyError(f"Missing variable definition: {e}.")
-        return self.fast_func(*args)
+        if len(vals) != len(self.variables):
+            raise ValueError(f"Not enough variables when evaluating function {self.name}. Have {len(vals)} expect {len(self.variables)}.")
+        
+        return self.fast_func(vals)
     
-    def gradients(self):
-        return [diff(self.expr, v) for v in self.variables]
+    def __call__(self, vals: list[float]) -> float:
+        """
+        Evaluate numerically using numpy-lambdified function.
+        The list must contain all required variable names in alphabetical order (of variables).
+        """
+        return self.eval(vals=vals)
     
-    def __call__(self, value_dict: dict) -> float:
-        return self.eval(value_dict=value_dict)
+    def jacobian(self, vals: list[float]) -> np.ndarray:
+        return np.array([f(vals) for f in self.gradient_funcs], dtype=float)
 
     def __repr__(self):
         return f"{self.name} = {self.text}"
-
