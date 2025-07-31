@@ -19,18 +19,18 @@ A2 = 1.5 * sin(1) - cos(1) + 2 * sin(2) - 0.5 * cos(2)
 
 O1 = F1;
 
-*EQUALITY-CONSTRAINT: 0
+*EQUALITY-CONSTRAINT: 1
 
+EQ1 = F3;
 
-*INEQUALITY-CONSTRAINT: 2
+*INEQUALITY-CONSTRAINT: 1
 
 INEC1 = F2;
-INEC2 = F3;
 
 *FUNCTION: 5
-F2 = x1 + x2;
 F1 = F2 ** 2;
-F3 = Sum(x1, (i, 0, 2));
+F2 = x1 + x2;
+F3 = F1 + x3 ** 4 + sin(x2);
 F4 = x1 * k;
 F5 = iSum(x[i], (i, 1, 3));
 

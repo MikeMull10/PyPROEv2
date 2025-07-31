@@ -31,14 +31,23 @@ locals = {
 def replace_isum(match: regex.Match):
     expr = match.group(1)  # mathmatical expression
     var  = match.group(2)  # index variable
-    start= match.group(3)  # min
-    end  = match.group(4)  # max
+    start = int(match.group(3))  # min
+    end   = int(match.group(4))  # max
 
-    ret = []
-    for i in range(int(start), int(end) + 1):
-        ret.append(expr.replace(f"[{var}]", str(i)))
-    
-    return ' + '.join(ret)
+    result_terms = []
+    for i in range(start, end + 1):
+        # Replace all var[index_expr] with varN
+        def replace_indexed(m):
+            base = m.group(1)                   # e.g., 'x'
+            index_expr = m.group(2)             # e.g., 'i+1'
+            value = sympify(index_expr, locals={var: i})
+            return f"{base}{int(value)}"
+
+        # Replace all pattern like x[...] with xN
+        transformed_expr = regex.sub(r'(\w+)\[(.*?)\]', replace_indexed, expr)
+        result_terms.append(transformed_expr)
+
+    return ' + '.join(result_terms)
 
 def prepare_function(func_str: str):
     # Handle iSum
@@ -108,7 +117,6 @@ class BasicFunction:
     def __repr__(self):
         return f"{self.level} | {self.name} = {self.text}"
 
-#TODO: Handle F1 vs F11 etc
 class Node:
     def __init__(self, value: str, parent: Node, functions: list[BasicFunction]):
         self.value: str = value
@@ -162,11 +170,16 @@ class Node:
             result += repr(child)
         return result
 
-def get_fast_func(expr, vars: list[str]):
-    fast_func = lambdify(vars, expr, modules='numpy')
+def get_fast_func(expr, variables):
+    # Only keep variables that appear in the expression
+    used_vars = [v for v in variables if v in expr.free_symbols]
 
-    def wrapper(x_array):
-        return fast_func(*x_array)
+    fast_func = lambdify(used_vars, expr, modules='numpy')
+
+    def wrapper(vals: list[float]):
+        # Filter the values down to only those used
+        filtered_vals = [val for var, val in zip(variables, vals) if var in used_vars]
+        return fast_func(*filtered_vals)
 
     return wrapper
 
@@ -182,7 +195,7 @@ class Function:
 
         # Detect variable names using sympy
         self.expr = get_expr(function, [v.lower() for v in variables], constants=self.constants)
-        self.variables = sorted(self.expr.free_symbols, key=lambda s: str(s))  # sorted list of symbols
+        self.variables = sorted(symbols(' '.join([v.lower() for v in variables]), real=True), key=lambda s: str(s))
 
         # Create fast evaluation function
         self.fast_func = get_fast_func(self.expr, self.variables)
