@@ -1,4 +1,5 @@
 from testing.fnc_objects import Variable, Constant, Function, BasicFunction, Node
+from scipy.optimize import NonlinearConstraint
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -211,3 +212,23 @@ class InputFile:
     
     def get_bounds(self):
         return [np.array([v.min, v.max]) for v in self.variables]
+
+    def get_nonlinear_constraints(self) -> list[NonlinearConstraint]:
+        ret: list[NonlinearConstraint] = []
+        
+        for eq in self.equality_constraints:
+            ret.append(NonlinearConstraint(
+                eq,
+                0,
+                0,
+                jac=eq.jacobian,
+            ))
+        for ineq in self.inequality_constraints:
+            ret.append(NonlinearConstraint(
+                ineq,
+                -np.inf,
+                0,
+                jac=ineq.jacobian,
+            ))
+        
+        return ret

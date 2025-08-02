@@ -204,7 +204,8 @@ class Function:
         self.gradient_exprs = [diff(self.expr, v) for v in self.variables]
         self.gradient_funcs = [get_fast_func(grad, self.variables) for grad in self.gradient_exprs]
 
-        Function.registry[name] = self
+        if name != "":
+            Function.registry[name] = self
 
     def eval(self, vals: list[float]) -> float:
         """
