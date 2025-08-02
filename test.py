@@ -21,5 +21,6 @@ if __name__ == "__main__":
     # f = InputFile("testing/Kursawe.fnc")
     # print(f)
 
-    d = Optimize.single(f, grid_size=100)
-    print(d)
+    # d = Optimize.single(f, grid_size=10)
+    d = Optimize.multi(f, min_weight=0.01, increment=0.01)
+    # print(d)

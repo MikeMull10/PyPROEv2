@@ -14,6 +14,21 @@ def gen_guesses(bounds, samples: int = 5):
         *[np.linspace(_min, _max, samples) for _min, _max in bounds]
     )
 
+def generate_weight_combinations(n: int, min_weight: float, step: float):
+    total_units = int(round((1.0 - n * min_weight) / step))
+
+    for parts in integer_partitions(n, total_units):
+        yield [round(min_weight + step * p, 10) for p in parts]
+
+def integer_partitions(n: int, total: int):
+    """Generate all compositions of `total` into `n` non-negative integers."""
+    if n == 1:
+        yield [total]
+    else:
+        for i in range(total + 1):
+            for tail in integer_partitions(n - 1, total - i):
+                yield [i] + tail
+
 class Optimize:
     @staticmethod
     def single(
@@ -85,3 +100,22 @@ class Optimize:
                 'data': best
             }
         )
+    
+    @staticmethod
+    def multi(
+        input: InputFile,
+        min_weight: float=0.01,
+        increment: float=0.01,
+        *,
+        grid_size: int=5,
+        tolerance: float=1e-20,
+        ftol: float=1e-20,
+    ) -> Optimization:
+        i = 0
+        for w in generate_weight_combinations(3, min_weight=min_weight, step=increment):
+            i += 1
+            print(w)
+        
+        print(i)
+
+        return Optimization()
