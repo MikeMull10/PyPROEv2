@@ -20,3 +20,6 @@ class Optimization:
             return f"FAILED: {self.error_message}"
 
         return str(self.data)
+
+    def __getitem__(self, key):
+        return self.data[key]

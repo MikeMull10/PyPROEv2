@@ -6,6 +6,8 @@ import logging
 from pprint import pprint as pp
 
 import matplotlib.pyplot as plt
+import cProfile
+import pstats
 
 def plot_points(points, title="Point Plot", color='blue', marker='o'):
     # Unzip the list of (x, y) points
@@ -25,20 +27,33 @@ def plot_points(points, title="Point Plot", color='blue', marker='o'):
     # Show the plot
     plt.show()
 
+def test():
+    f = InputFile("testing/Binh&Korn.fnc")
+    d = Optimize.multi(f, min_weight=0.01, increment=0.01)
+    print(d['time'])
 
 if __name__ == "__main__":
-    level = logging.DEBUG
-    fmt = '[%(levelname)s] %(asctime)s %(message)s'
-    logging.basicConfig(level=level, format=fmt)
+    # level = logging.DEBUG
+    # fmt = '[%(levelname)s] %(asctime)s %(message)s'
+    # logging.basicConfig(level=level, format=fmt)
     
     # f = InputFile("testing/381-HW#4.fnc")
     # f = InputFile("testing/Test.fnc")
     # f = InputFile("testing/ZDT1.fnc")
     # f = InputFile("testing/Kursawe.fnc")
-    f = InputFile("testing/Binh&Korn.fnc")
+    # f = InputFile("testing/Binh&Korn.fnc")
     # print(f)
 
     # d = Optimize.single(f, grid_size=10)
-    d = Optimize.multi(f, min_weight=0.01, increment=0.01)
-    points = d.data['data']['points']
-    plot_points(points)
+    # d = Optimize.multi(f, min_weight=0.01, increment=0.01)
+    # points = d.data['data']['points']
+    # print(d['time'])
+    # plot_points(points)
+    # cProfile.run('test()', sort='time')
+    with open("profile_output.txt", "w") as f:
+        profiler = cProfile.Profile()
+        profiler.enable()
+        test()  # or your actual function call
+        profiler.disable()
+        stats = pstats.Stats(profiler, stream=f)
+        stats.sort_stats("time").print_stats()

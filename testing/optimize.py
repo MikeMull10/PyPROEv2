@@ -35,6 +35,22 @@ def integer_partitions(n: int, total: int):
             for tail in integer_partitions(n - 1, total - i):
                 yield [i] + tail
 
+### This is WAYYY faster than just making new Functions each time
+def generate_multi(functions: list[Function]) -> callable:
+    def wrapper(x, weights: list[float]):
+        return sum(
+            w * f(x) for w, f in zip(weights, functions)
+        )
+    
+    return wrapper
+
+def generate_weighted_jacobian(functions: list[Function]) -> callable:
+    def wrapper(vals: list[float], weights: list[float]):
+        weighted_jacs = [w * np.array(f.jacobian(vals)) for w, f in zip(weights, functions)]
+        return np.sum(weighted_jacs, axis=0)
+    
+    return wrapper
+
 class Optimize:
     @staticmethod
     def single(
@@ -51,9 +67,10 @@ class Optimize:
         constraints: list[NonlinearConstraint] = input.get_nonlinear_constraints()
 
         opt_start_time = perf_counter()
-        fails = 0
+        total, failed = 0, 0
         best: OptimizeResult = None
         for guess in gen_guesses(input.get_bounds(), samples=grid_size):
+            total += 1
             try:
                 result: OptimizeResult = minimize(
                     input.objectives[0],
@@ -74,10 +91,10 @@ class Optimize:
                 if best is None or best.fun > result.fun:
                     best = result
             else:
-                fails += 1
+                failed += 1
         
         opt_end_time = perf_counter()
-        print(f"FAILED: {fails} / {grid_size ** len(input.variables)} ({(100 * fails / (grid_size ** len(input.variables))):2f}%)")
+        print(f"FAILED: {failed} / {grid_size ** len(input.variables)} ({(100 * failed / (grid_size ** len(input.variables))):2f}%)")
         if best is None:
             return Optimization(Opt.FAILED, f"No successful solution found with {grid_size ** len(input.variables)} initial points.")
         
@@ -86,7 +103,8 @@ class Optimize:
             {
                 'type': 'single',
                 'time': opt_end_time - opt_start_time,
-                'data': best
+                'data': best,
+                'success_rate': 1 - failed / total
             }
         )
     
@@ -108,27 +126,30 @@ class Optimize:
         len_objectives = len(input.objectives)
         constraints = input.get_nonlinear_constraints()
 
-        i = 0
+        multi_func = generate_multi(input.functions)
+        multi_jac = generate_weighted_jacobian(input.functions)
+
         opt_start_time = perf_counter()
+        total, failed = 0, 0
         best_results: list[OptimizeResult] = []
-        print(len_objectives)
+        guesses = list(gen_guesses(input.get_bounds(), grid_size))
         for weight in generate_weight_combinations(len_objectives, min_weight=min_weight, step=increment):
-            func_str = ' + '.join(
-                [f"{w} * {f.name}" for w, f in zip(weight, input.objectives)]
-            )
-            i += 1
-            func = Function("", func_str, [v.symbol for v in input.variables], {con.symbol: con.value for con in input.constants})
+            total += 1
+            def objective(x):
+                return multi_func(x, weight)
+            def jacobian(x):
+                return multi_jac(x, weight)
 
             best_result: OptimizeResult = None
-            for guess in gen_guesses(input.get_bounds(), grid_size):
+            for guess in guesses:
                 try:
                     result: OptimizeResult = minimize(
-                        func,
+                        objective,
                         x0=guess,
                         method="SLSQP",
                         bounds=input.get_bounds(),
                         constraints=constraints,
-                        jac=func.jacobian,
+                        jac=jacobian,
                         tol=tolerance,
                         options={
                             "disp": False,
@@ -145,9 +166,10 @@ class Optimize:
                 
             if best_result:
                 best_results.append(best_result)
+            else:
+                failed += 1
         
         opt_end_time = perf_counter()
-        print(f"Testing: {i} -- {len(best_results)}")
 
         x_values = [res.x for res in best_results]
         points = []
@@ -165,6 +187,7 @@ class Optimize:
                 'data': {
                     'results': best_results,
                     'points': points
-                }
+                },
+                'success_rate': 1 - failed / total
             }
         )
