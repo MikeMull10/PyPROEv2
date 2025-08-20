@@ -14,8 +14,8 @@ TODO:
  [ ] - Improve Optimization  
    [ ] - Add GimOPT functions  
    [ ] - Improve .fnc files  
-     [ ] - Add nested functions  
-     [ ] - Add dependant variables  
+     [X] - Add nested functions  
+     [X] - Add dependant variables  
  [ ] - Improve Startup  
    [ ] - Create installer to install like a normal program  
    [ ] - Create updater?  

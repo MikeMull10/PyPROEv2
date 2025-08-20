@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QComboBox, QScrollArea, QSizePolicy,
     QDialog, QDialogButtonBox, QPlainTextEdit
 )
-from PySide6.QtCore import Qt, QSize, QTimer
+from PySide6.QtCore import Qt, QSize, QTimer, Signal
 from PySide6.QtGui import QFontMetrics
 import sys
 
@@ -13,6 +13,7 @@ class AutoWidthLineEdit(QLineEdit):
         self.setObjectName("AutoWidthLineEdit")
 
         self.setAlignment(Qt.AlignCenter)
+        self.old_text = text
         
         # Track size changes
         self.textChanged.connect(self.update_width)
@@ -62,9 +63,8 @@ class InlineRow(QWidget):
             QPushButton {{
                 background: rgba(0, 0, 0, .22);
                 border-radius: 5px;
-                padding-{'top' if i != 2 else 'bottom'}: 4px;
             }}
-            """)
+            """) #padding-{'top' if i != 2 else 'bottom'}: 4px;
             btn.setCursor(Qt.PointingHandCursor)
             layout.addWidget(btn)
 
@@ -100,6 +100,8 @@ class InlineRow(QWidget):
                 result.append('lt' if w.text() == '\u2264' else 'gt')
             elif isinstance(w, EquationButton):
                 result.append(w.equation_text)
+            elif isinstance(w, FunctionDropdown):
+                result.append(w.currentText())
         
         return result
 
@@ -118,9 +120,10 @@ class ToggleIneqButton(QPushButton):
         return self.text()
     
 class Section(QWidget):
-    def __init__(self, title: str, row_generator):
+    def __init__(self, title: str, row_generator, on_change_callback=None):
         super().__init__()
         self.row_generator = row_generator
+        self.on_change_callback = on_change_callback
         self.rows: list[InlineRow] = []
 
         self.layout: QVBoxLayout = QVBoxLayout()
@@ -146,28 +149,26 @@ class Section(QWidget):
         self.setLayout(self.layout)
 
     def add_row(self, values=None):
-        # Use the row_generator, passing index if needed
         row = self.row_generator(len(self.rows))
-
-        # Wrap in InlineRow with this Section as parent
         inline = InlineRow(row, parent_section=self)
-
         self.rows.append(inline)
         self.layout.addWidget(inline)
         self.update_label()
 
-        # If values were passed, set them
         if values:
             for widget, value in zip(inline.findChildren(QLineEdit), values):
                 widget.setText(str(value))
 
-        print(self.get_data())
+        if self.on_change_callback:
+            self.on_change_callback()
 
     def remove_row(self, row_widget: QWidget):
         self.rows.remove(row_widget)
         row_widget.setParent(None)
         row_widget.deleteLater()
         self.update_label()
+        if self.on_change_callback:
+            self.on_change_callback()
 
     def move_row_up(self, row_widget):
         idx = self.rows.index(row_widget)
@@ -201,97 +202,6 @@ class Section(QWidget):
     
     def get_data(self):
         return [row.get_data() for row in self.rows]
-
-class FormulationTab(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.setObjectName("FormulationTab")
-        self.font_size = 24
-        self.setStyleSheet("""
-            #FormulationTab {
-                font-size: 24px;
-                font-family: "Courier New", monospace;
-            }
-
-            #FormulationTab QLabel,
-            #FormulationTab QLineEdit,
-            #FormulationTab QPushButton {
-                font-size: 24px;
-                font-family: "Courier New", monospace;
-            }
-            QPushButton:focus {
-                outline: none;
-            }
-            QPushButton, #AutoWidthLineEdit {
-                border-width: 1px;
-                border-style: solid;
-                border-color: #aaa;
-            }
-        """)
-
-        self.variables  = Section("*Variable", variable_row)
-        self.constants  = Section("*Constant", constant_row)
-        self.objectives = Section("*Objective", objective_row)
-        self.equality   = Section("*Equality-Constraint", eq_constraint_row)
-        self.inequality = Section("*Inequality-Constraint", ineq_constraint_row)
-        self.function   = Section("*Function", function_row)
-
-        form_layout = QVBoxLayout(self)
-        form_layout.addWidget(self.variables)
-        form_layout.addWidget(self.constants)
-        form_layout.addWidget(self.objectives)
-        form_layout.addWidget(self.equality)
-        form_layout.addWidget(self.inequality)
-        form_layout.addWidget(self.function)
-    
-    def create_fnc_file(self):
-        ret = """
-#-----------------------------------------------------------------------
-# Input File Start
-#-----------------------------------------------------------------------\n
-"""
-        vars = self.variables.get_data()
-        ret += f"*VARIABLE: {len(vars)}\n"
-        for _min, name, _max in vars:
-            ret += f"{name.upper()}: {_min}, {_max}, REAL, {1e-6}\n"
-        ret += "\n"
-
-        cons = self.constants.get_data()
-        ret += f"*CONSTANT: {len(cons)}\n"
-        for name, value in cons:
-            ret += f"{name.upper()}: {value};\n"
-        ret += "\n"
-
-        objs = self.objectives.get_data()
-        ret += f"*OBJECTIVE: {len(objs)}\n"
-        for name, func in objs:
-            ret += f"{name.upper()}: {func};\n"
-        ret += "\n"
-
-        eqs = self.equality.get_data()
-        ret += f"*EQUALITY-CONSTRAINT: {len(eqs)}\n"
-        for name, func, threshold in eqs:
-            ret += f"{name.upper()}: {func}{' - ' + str(threshold) if float(threshold) != 0.0 else ''};\n"
-        ret += "\n"
-
-        ineqs = self.inequality.get_data()
-        ret += f"*EQUALITY-CONSTRAINT: {len(ineqs)}\n"
-        for name, func, sign, threshold in eqs:
-            ret += f"{name.upper()}: {'-' if sign == 'gt' else ''}{func}{' - ' + str(threshold) if float(threshold) != 0.0 else ''};\n"
-        ret += "\n"
-
-        funcs = self.function.get_data()
-        ret += f"*FUNCTION: {len(funcs)}\n"
-        for name, func in funcs:
-            ret += f"{name.upper()}: {func};\n"
-        ret += "\n"
-
-        ret += """
-#-----------------------------------------------------------------------
-# End of input file
-#-----------------------------------------------------------------------
-"""
-        return ret
 
 def QWidgetWithChildren(widgets: list):
     container = QWidget()
@@ -355,6 +265,124 @@ QPushButton {
             new_text = dialog.get_equation_text()
             self.set_equation(new_text)
 
+class FunctionDropdown(QComboBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setEditable(True)  # Optional: let user type if needed
+
+    def update_options(self, function_list: list[str]):
+        current = self.currentText()
+        self.blockSignals(True)  # Optional: prevent signal spamming during update
+        self.clear()
+        self.addItems(function_list)
+        
+
+        if current in function_list:
+            self.setCurrentText(current)
+        else:
+            self.setCurrentIndex(-1)  # No selection
+        self.blockSignals(False)
+
+class FormulationTab(QWidget):
+    functions_updated = Signal(list)
+
+    def __init__(self):
+        super().__init__()
+
+        self.setObjectName("FormulationTab")
+        self.font_size = 24
+        self.setStyleSheet("""
+            #FormulationTab {
+                font-size: 24px;
+                font-family: "Courier New", monospace;
+            }
+
+            #FormulationTab QLabel,
+            #FormulationTab QLineEdit,
+            #FormulationTab QPushButton {
+                font-size: 24px;
+                font-family: "Courier New", monospace;
+            }
+            QPushButton:focus {
+                outline: none;
+            }
+            QPushButton, #AutoWidthLineEdit {
+                border-width: 1px;
+                border-style: solid;
+                border-color: #aaa;
+            }
+        """)
+
+        self.variables  = Section("*Variable", variable_row)
+        self.constants  = Section("*Constant", constant_row)
+        self.objectives = Section("*Objective", lambda i: objective_row(i, self), on_change_callback=self.refresh_function_list)
+        self.equality   = Section("*Equality-Constraint", lambda i: eq_constraint_row(i, self), on_change_callback=self.refresh_function_list)
+        self.inequality = Section("*Inequality-Constraint", lambda i: ineq_constraint_row(i, self), on_change_callback=self.refresh_function_list)
+        self.function   = Section("*Function", function_row, on_change_callback=self.refresh_function_list)
+
+        form_layout = QVBoxLayout(self)
+        form_layout.addWidget(self.variables)
+        form_layout.addWidget(self.constants)
+        form_layout.addWidget(self.objectives)
+        form_layout.addWidget(self.equality)
+        form_layout.addWidget(self.inequality)
+        form_layout.addWidget(self.function)
+    
+    def create_fnc_file(self):
+        ret = """
+#-----------------------------------------------------------------------
+# Input File Start
+#-----------------------------------------------------------------------\n
+"""
+        vars = self.variables.get_data()
+        ret += f"*VARIABLE: {len(vars)}\n"
+        for _min, name, _max in vars:
+            ret += f"{name.upper()}: {_min}, {_max}, REAL, {1e-6}\n"
+        ret += "\n"
+
+        cons = self.constants.get_data()
+        ret += f"*CONSTANT: {len(cons)}\n"
+        for name, value in cons:
+            ret += f"{name.upper()}: {value};\n"
+        ret += "\n"
+
+        objs = self.objectives.get_data()
+        ret += f"*OBJECTIVE: {len(objs)}\n"
+        for name, func in objs:
+            ret += f"{name.upper()}: {func};\n"
+        ret += "\n"
+
+        eqs = self.equality.get_data()
+        ret += f"*EQUALITY-CONSTRAINT: {len(eqs)}\n"
+        for name, func, threshold in eqs:
+            ret += f"{name.upper()}: {func}{' - ' + str(threshold) if float(threshold) != 0.0 else ''};\n"
+        ret += "\n"
+
+        ineqs = self.inequality.get_data()
+        ret += f"*EQUALITY-CONSTRAINT: {len(ineqs)}\n"
+        for name, func, sign, threshold in eqs:
+            ret += f"{name.upper()}: {'-' if sign == 'gt' else ''}{func}{' - ' + str(threshold) if float(threshold) != 0.0 else ''};\n"
+        ret += "\n"
+
+        funcs = self.function.get_data()
+        ret += f"*FUNCTION: {len(funcs)}\n"
+        for name, func in funcs:
+            ret += f"{name.upper()}: {func};\n"
+        ret += "\n"
+
+        ret += """
+#-----------------------------------------------------------------------
+# End of input file
+#-----------------------------------------------------------------------
+"""
+        return ret
+
+    def refresh_function_list(self, rename_map=None):
+        function_names = [x[0] for x in self.function.get_data()]
+        print(function_names)
+        self.functions_updated.emit(function_names)
+        self.rename_map = rename_map or {}
+
 def variable_row(index):
     return [
         AutoWidthLineEdit("0.0"),
@@ -372,39 +400,54 @@ def constant_row(index):
         QLabel(";"),
     ]
 
-def objective_row(index):
+def objective_row(index, parent: FormulationTab):
+    drop = FunctionDropdown()
+    parent.functions_updated.connect(drop.update_options)
+
     return [
         AutoWidthLineEdit(f"O{index + 1}"),
         QLabel("="),
-        AutoWidthLineEdit(f"F{index + 1}"),
+        drop,
         QLabel(";"),
     ]
 
-def eq_constraint_row(index):
+def eq_constraint_row(index, parent: FormulationTab):
+    drop = FunctionDropdown()
+    parent.functions_updated.connect(drop.update_options)
+
     return [
         AutoWidthLineEdit(f"EC{index + 1}"),
         QLabel("\u21d2"),
-        AutoWidthLineEdit(f"F{index + 1}"),
+        drop,
         QLabel("="),
         AutoWidthLineEdit("0.0"),
         QLabel(";"),
     ]
 
-def ineq_constraint_row(index):
+def ineq_constraint_row(index, parent: FormulationTab):
+    drop = FunctionDropdown()
+    parent.functions_updated.connect(drop.update_options)
+
     return [
         AutoWidthLineEdit(f"INEC{index + 1}"),
         QLabel("\u21d2"),
-        AutoWidthLineEdit(f"F{index + 1}"),
+        drop,
         ToggleIneqButton(),
         AutoWidthLineEdit("0.0"),
         QLabel(";"),
     ]
 
 def function_row(index):
+    func_name = AutoWidthLineEdit(f"F{index + 1}")
     equation_btn = EquationButton()
 
+    def my_handler(w):
+        print(w.text())
+
+    func_name.editingFinished.connect(lambda w=func_name: my_handler(w))
+
     return [
-        AutoWidthLineEdit(f"F{index + 1}"),
+        func_name,
         QLabel("="),
         equation_btn,
         QLabel(";"),
