@@ -33,19 +33,47 @@ button:disabled {
 }
 
 button.danger {
-    background-color: #8b0000;
+    /* background-color: #8b0000; */
+    color: #7cc1e4;
+    background-color: transparent;
+    border: 1px solid transparent;
+    text-decoration: underline;
 }
 
 button.danger:hover {
-    background-color: #a30000;
+    /* background-color: #a30000; */
+    color: #A7D8F0;
 }
 
 button.primary {
-    background-color: #3794ff;
+    background-color: #7CC1E4;
+    border: 1px solid transparent;
+    color: #262626;
 }
 
 button.primary:hover {
-    background-color: #4aa3ff;
+    background-color: #A7D8F0;
+}
+
+button.secondary {
+    background-color: transparent;
+    border: 1px solid #7CC1E4;
+    color: #7cc1e4;
+}
+
+button.secondary:hover {
+    border-color: #A7D8F0;
+    color: #a7d8f0;
+}
+
+button.test {
+    background-color: #7CC1E4;
+    border: 1px solid transparent;
+    color: #262626;
+}
+
+button.test:hover {
+    background-color: #A7D8F0;
 }
 
 input, select {
@@ -103,8 +131,9 @@ th {
 </nav>
 
 <button>Default</button>
-<button class="primary">Primary</button>
-<button class="danger">Danger</button>
+<button class="primary">Button</button>
+<button class="secondary">Button</button>
+<button class="danger">Button</button>
 <button disabled>Disabled</button>
 
 <br><br>
