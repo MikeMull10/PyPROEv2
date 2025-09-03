@@ -2,6 +2,9 @@ import re
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui     import QFontMetrics
 from basics.basic_function import resource_path
+from stylesheet.colors import *
+from stylesheet.theme import ThemeManager as TM
+from stylesheet.theme import THEME_KEYS
 
 # — your existing converters —
 def em(val, widget):    return round(val * QFontMetrics(widget.font()).height())
@@ -46,3 +49,20 @@ def load_stylesheet(style_path: str, widget: QWidget=None):
         stylesheet = file.read()
 
     return process_css(stylesheet, widget)
+
+def get_stylesheet(theme: str) -> str:
+    with open(resource_path("assets/style.qss"), "r") as file:
+        stylesheet = file.read()
+
+    for key in THEME_KEYS:
+        stylesheet = stylesheet.replace(f"${key}$", TM.get(key, theme, None))
+    
+    stylesheet = stylesheet.replace("$Menu_Hover_BG_Color$", GREY_8)
+    stylesheet = stylesheet.replace("$Formulation_BG_Color$", GREY_2)
+    stylesheet = stylesheet.replace("$QPushButton_BG_Color$", GREY_8)
+    stylesheet = stylesheet.replace("$QPushButton_Color$", BLACK)
+    stylesheet = stylesheet.replace("$QPushButtonHover_BG_Color$", GREY_7)
+
+    # print(stylesheet)
+
+    return stylesheet

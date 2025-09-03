@@ -1,0 +1,48 @@
+* {
+    background-color: $Base_BG_Color$;
+    color: $Base_Color$;
+}
+
+QMenuBar {
+    font: 18px;
+}
+
+QMenuBar::item {
+    background: transparent;
+    padding: 6px 20px;
+    margin: 2px; 
+    border-radius: 4px; 
+}
+
+QMenuBar::item:selected {
+    color: #fff;
+    background: #555;
+}
+
+QMenuBar::item:pressed {
+    color: #fff;
+    background: #3b3b3b;
+}
+
+QMenu {
+    font: 16px;
+}
+
+#Formulation {  
+    background-color: $Formulation_BG_Color$;
+}
+
+QPushButton {
+    background-color: $QPushButton_BG_Color$;
+    color: $QPushButton_Color$;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font: 16;
+    font-weight: 500;
+    width: 50%;
+}
+
+QPushButton:hover {
+    background-color: $QPushButtonHover_BG_Color$;
+}
