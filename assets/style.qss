@@ -28,10 +28,6 @@ QMenu {
     font: 16px;
 }
 
-#Formulation {  
-    background-color: $Formulation_BG_Color$;
-}
-
 QPushButton {
     background-color: $QPushButton_BG_Color$;
     color: $QPushButton_Color$;
@@ -45,4 +41,47 @@ QPushButton {
 
 QPushButton:hover {
     background-color: $QPushButtonHover_BG_Color$;
+}
+
+#btnOptStart, #btnOptStop, #btnOptClear {
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin 4px;
+    font-weight: 500;
+    font: 16px;
+}
+
+#btnOptStart {
+    background-color: $Btn_Opt_Start_BG$;
+    color: $Base_BG_Color$;
+}
+
+#btnOptStart:hover {
+    background-color: $Btn_Opt_Start_BG_Hover$;
+}
+
+#btnOptStop {
+    background-color: transparent;
+    border-color: $Btn_Opt_Start_BG$;
+    color: $Btn_Opt_Start_BG$;
+}
+
+#btnOptStop:hover {
+    border-color: $Btn_Opt_Start_BG_Hover$;
+    color: $Btn_Opt_Start_BG_Hover$;
+}
+
+#btnOptClear {
+    background-color: transparent;
+    color: $Btn_Opt_Start_BG$;
+    text-decoration: underline;
+}
+
+#btnOptClear:hover {
+    color: $Btn_Opt_Start_BG_Hover$;
+}
+
+#Optimization QLabel, QComboBox {
+    font: 16px;
 }

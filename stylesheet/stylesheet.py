@@ -50,12 +50,12 @@ def load_stylesheet(style_path: str, widget: QWidget=None):
 
     return process_css(stylesheet, widget)
 
-def get_stylesheet(theme: str) -> str:
+def get_stylesheet(theme: str, subtheme: str='Default') -> str:
     with open(resource_path("assets/style.qss"), "r") as file:
         stylesheet = file.read()
 
     for key in THEME_KEYS:
-        stylesheet = stylesheet.replace(f"${key}$", TM.get(key, theme, None))
+        stylesheet = stylesheet.replace(f"${key}$", TM.get(key, theme, subtheme))
     
     stylesheet = stylesheet.replace("$Menu_Hover_BG_Color$", GREY_8)
     stylesheet = stylesheet.replace("$Formulation_BG_Color$", GREY_2)

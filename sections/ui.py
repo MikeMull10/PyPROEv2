@@ -17,25 +17,6 @@ from sections.metamodelling import MetamodelPage
 
 from basics.settings import SettingsManager
 
-class MiniPage(QWidget):
-    """A simple mini-page widget with a title and placeholder content."""
-    def __init__(self, title: str, color: str):
-        super().__init__()
-
-        self.setStyleSheet(f"background-color: {color}; border: none;")
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(2, 2, 2, 2)  # remove padding inside the widget
-        layout.setSpacing(0)                   # remove spacing between items in layout
-        
-        label = QLabel(title)
-        label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(label)
-
-        btn = QPushButton("Test Button")
-        btn.setStyleSheet(get_stylesheet('Light'))
-        layout.addWidget(btn)
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -78,10 +59,12 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(scroll)
 
         # --- Setup ---
-        # self.setStyleSheet(get_stylesheet(self.settings["theme"]))
-        self.setStyleSheet(get_stylesheet('Dark'))
+        self._update_stylesheet()
         self._setup_commands()
         self._setup_menu()
+
+    def _update_stylesheet(self):
+        self.setStyleSheet(get_stylesheet(self.settings['theme'], self.settings['subtheme']))
     
     def _setup_commands(self) -> None:
         # Close the Application
@@ -124,7 +107,7 @@ class MainWindow(QMainWindow):
         QApplication.instance().quit()
 
     def show_settings(self):
-        QMessageBox.information(self, "Settings", "Preferences dialog would appear here.")
+        self.settings.create_popup(self)
 
     def _open_file(self):
         self.open_file_dialog = QFileDialog(self, 

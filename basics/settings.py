@@ -1,6 +1,6 @@
 from PySide6.QtCore import QSettings, Signal, QObject
 from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QDialog, QFormLayout, QLabel, QComboBox, QSpinBox, QCheckBox, QLineEdit, QDialogButtonBox
+from PySide6.QtWidgets import QDialog, QFormLayout, QLabel, QComboBox, QSpinBox, QCheckBox, QLineEdit, QDialogButtonBox, QVBoxLayout
 
 from basics.basic_function import resource_path
 
@@ -17,6 +17,12 @@ all_settings = {
         "type": str,
         "values": ["Light", "Dark"],
     },
+    "subtheme": {
+        "category": None,
+        "default": "Default",
+        "type": str,
+        "values": ['Default', 'Red', 'Orange', 'Yellow', 'Green', 'Light Blue', 'Blue', 'Purple', 'Pink']
+    },
     "previous_open_file_dir": {
         "category": None,
         "default": "",
@@ -30,8 +36,6 @@ class SettingsManager(QObject):
     def __init__(self, ui):
         super().__init__(None)
         self.settings = QSettings("Porus", "Interface")
-        # self.settings.clear()
-        # self.settings.sync()
         self.__setup_settings()
         self.ui = ui
 
@@ -153,3 +157,46 @@ class SettingsManager(QObject):
             self.settings.endGroup()
             return keys
         return self.settings.allKeys()
+    
+    def create_popup(self, parent):
+        dlg = QDialog()
+        dlg.setWindowTitle("Settings")
+        dlg.setWindowIcon(QIcon(resource_path("assets/pyproe-logo.png")))
+
+        form = QFormLayout(dlg)
+
+        ### --- Items ---
+        theme_layout = QVBoxLayout()
+        theme_layout.addWidget(QLabel("Theme"))
+        theme_drop = QComboBox()
+        theme_drop.addItems(['Light', 'Dark'])
+        theme_drop.setCurrentText(self.get('theme'))
+        theme_layout.addWidget(theme_drop)
+        theme_drop.currentTextChanged.connect(
+            lambda text: (self.set('theme', text), parent._update_stylesheet())
+        )
+
+        subtheme_layout = QVBoxLayout()
+        subtheme_layout.addWidget(QLabel("Subtheme"))
+        subtheme_drop = QComboBox()
+        subtheme_drop.addItems(all_settings['subtheme']['values'])
+        subtheme_drop.setCurrentText(self.get('subtheme'))
+        subtheme_layout.addWidget(subtheme_drop)
+        subtheme_drop.currentTextChanged.connect(
+            lambda text: (self.set('subtheme', text), parent._update_stylesheet())
+        )
+
+        form.addRow(theme_layout)
+        form.addRow(subtheme_layout)
+
+        # --- OK / Cancel buttons ---
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            parent=dlg
+        )
+        form.addRow(buttons)
+        buttons.accepted.connect(dlg.accept)
+        buttons.rejected.connect(dlg.reject)
+
+        if dlg.exec() == QDialog.Accepted:
+            pass

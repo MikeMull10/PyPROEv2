@@ -14,11 +14,6 @@ class FormulationPage(QWidget):
 
         main = QVBoxLayout(self)
 
-        # layout = QVBoxLayout(self)
-        # layout.addWidget(QLabel("Formulation", alignment=Qt.AlignCenter))
-        # layout.setContentsMargins(0, 0, 0, 0)
-        # layout.setSpacing(0)
-
         self.layout: QTextEdit = QTextEdit()
 
         main.addWidget(self.layout)
