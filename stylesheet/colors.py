@@ -322,6 +322,7 @@ COOL_GREY_8 = "#E4E7EB"
 COOL_GREY_9 = "#F5F7FA"
 
 # === Grey ===
+GREY_VS= "#22272e"
 GREY_0 = "#222222"
 GREY_1 = "#3B3B3B"
 GREY_2 = "#515151"

@@ -7,7 +7,7 @@ Colors: 'Red', 'Orange', 'Yellow', 'Green', 'Light Blue', 'Blue', 'Purple', 'Pin
 THEME = {
     "Base_BG_Color": {
         'Light': GREY_8,
-        'Dark':  GREY_0,
+        'Dark':  GREY_VS,
     },
     "Base_Color": {
         'Light': BLACK,
@@ -59,6 +59,30 @@ THEME = {
             'Blue'   : BLUE_5,
             'Purple' : PURPLE_5,
             'Pink'   : PINK_5,
+        }
+    },
+    "Btn_Opt_Disabled": {
+        'Light': {
+            'Default': GREY_0,
+            'Red'    : RED_VIVID_0,
+            'Orange' : ORANGE_VIVID_0,
+            'Yellow' : YELLOW_VIVID_0,
+            'Green'  : GREEN_VIVID_0,
+            'Light Blue': BLUE_VIVID_0,
+            'Blue'   : BLUE_VIVID_0,
+            'Purple' : PURPLE_VIVID_0,
+            'Pink'   : PINK_VIVID_0,
+        },
+        'Dark': {
+            'Default': GREY_0,
+            'Red'    : RED_0,
+            'Orange' : ORANGE_0,
+            'Yellow' : YELLOW_0,
+            'Green'  : GREEN_0,
+            'Light Blue': BLUE_0,
+            'Blue'   : BLUE_0,
+            'Purple' : PURPLE_0,
+            'Pink'   : PINK_0,
         }
     }
 }

@@ -48,17 +48,21 @@ QPushButton:hover {
     border-radius: 6px;
     padding: 6px 10px;
     margin 4px;
-    font-weight: 500;
+    font-weight: bold;
     font: 16px;
 }
 
 #btnOptStart {
     background-color: $Btn_Opt_Start_BG$;
-    color: $Base_BG_Color$;
+    color: $Base_Color$;
 }
 
 #btnOptStart:hover {
     background-color: $Btn_Opt_Start_BG_Hover$;
+}
+
+#btnOptStart:disabled {
+    background-color: $Btn_Opt_Disabled$;
 }
 
 #btnOptStop {
@@ -72,6 +76,11 @@ QPushButton:hover {
     color: $Btn_Opt_Start_BG_Hover$;
 }
 
+#btnOptStop:disabled {
+    border-color: $Btn_Opt_Disabled$;
+    color: $Btn_Opt_Disabled$;
+}
+
 #btnOptClear {
     background-color: transparent;
     color: $Btn_Opt_Start_BG$;
@@ -82,6 +91,6 @@ QPushButton:hover {
     color: $Btn_Opt_Start_BG_Hover$;
 }
 
-#Optimization QLabel, QComboBox {
+#Optimization QLabel, QComboBox, QLineEdit, QSpinBox, QDoubleSpinBox {
     font: 16px;
 }
