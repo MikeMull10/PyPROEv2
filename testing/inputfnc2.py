@@ -212,8 +212,8 @@ class InputFile:
     
     def get_bounds(self):
         return [np.array([v.min, v.max]) for v in self.variables]
-
-    def get_nonlinear_constraints(self) -> list[NonlinearConstraint]:
+    
+    def get_equality_constraints(self) -> list[NonlinearConstraint]:
         ret: list[NonlinearConstraint] = []
         
         for eq in self.equality_constraints:
@@ -223,6 +223,12 @@ class InputFile:
                 0,
                 jac=eq.jacobian,
             ))
+
+        return ret
+    
+    def get_inequality_constraints(self) -> list[NonlinearConstraint]:
+        ret = list[NonlinearConstraint]
+
         for ineq in self.inequality_constraints:
             ret.append(NonlinearConstraint(
                 ineq,
@@ -230,5 +236,13 @@ class InputFile:
                 0,
                 jac=ineq.jacobian,
             ))
+
+        return ret
+
+    def get_nonlinear_constraints(self) -> list[NonlinearConstraint]:
+        ret: list[NonlinearConstraint] = []
+        
+        ret.append(self.get_equality_constraints())
+        ret.append(self.get_inequality_constraints())
         
         return ret

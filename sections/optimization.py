@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QLayout, QApplication, QFormLayout, QSpinBox, QDoubleSpinBox
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QIntValidator, QFont
+from PySide6.QtGui import QFont
 
 from testing.inputfnc2 import InputFile
 from testing.optimize import Optimize as Opt
@@ -144,7 +144,7 @@ class OptimizationPage(QWidget):
         self.gridsize.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.gridsize_row = make_row("Grid Size:", self.gridsize)
         self.layout.addWidget(self.gridsize_row)
-        self.layout.addSpacing(10)
+        # self.layout.addSpacing(10)
 
         # --- Weight Minimum ---
         self.weight_min = NoTrailingZerosSpinBox()
@@ -156,7 +156,7 @@ class OptimizationPage(QWidget):
         self.weight_min.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_min_row = make_row("Minimum Weight:", self.weight_min)
         self.layout.addWidget(self.weight_min_row)
-        self.layout.addSpacing(10)
+        # self.layout.addSpacing(10)
 
         # --- Weight Increment ---
         self.weight_increment = NoTrailingZerosSpinBox()
@@ -168,7 +168,7 @@ class OptimizationPage(QWidget):
         self.weight_increment.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_increment_row = make_row("Weight Increment:", self.weight_increment)
         self.layout.addWidget(self.weight_increment_row)
-        self.layout.addSpacing(10)
+        # self.layout.addSpacing(10)
 
         # --- Iterations Row ---
         self.iterations = QSpinBox()
@@ -177,7 +177,7 @@ class OptimizationPage(QWidget):
         self.iterations.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.iterations_row = make_row("Iterations:", self.iterations)
         self.layout.addWidget(self.iterations_row)
-        self.layout.addSpacing(10)
+        # self.layout.addSpacing(10)
 
         # --- Population Row ---
         self.population = QSpinBox()
@@ -188,8 +188,9 @@ class OptimizationPage(QWidget):
         self.population.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.population_row = make_row("Population:", self.population)
         self.layout.addWidget(self.population_row)
-        self.layout.addSpacing(10)
+        # self.layout.addSpacing(10)
 
+        # --- Mutation Row ---
         self.mutation = QSpinBox()
         self.mutation.setMinimum(1)
         self.mutation.setMaximum(100)
@@ -197,7 +198,17 @@ class OptimizationPage(QWidget):
         self.mutation.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.mutation_row = make_row("Mutation:", self.mutation)
         self.layout.addWidget(self.mutation_row)
-        self.layout.addSpacing(10)
+        # self.layout.addSpacing(10)
+
+        # --- Partitions Row ---
+        self.partitions = QSpinBox()
+        self.partitions.setMinimum(0)
+        self.partitions.setMaximum(1e6)
+        self.partitions.setValue(100)
+        self.partitions.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.partitions_row = make_row("Partitions:", self.partitions)
+        self.layout.addWidget(self.partitions_row)
+        # self.layout.addSpacing(10)
 
         self._rebuild()
 
@@ -242,8 +253,9 @@ class OptimizationPage(QWidget):
         self.weight_min_row.setVisible(text == "Multi")
         self.weight_increment_row.setVisible(text == "Multi")
         self.iterations_row.setVisible(text in ["NSGAII", "NSGAIII"])
-        self.population_row.setVisible(text in ["NSGAII", "NSGAIII"])
+        self.population_row.setVisible(text == "NSGAII")
         self.mutation_row.setVisible(text in ["NSGAII", "NSGAIII"])
+        self.partitions_row.setVisible(text == "NSGAIII")
     
     def _solve(self, input: InputFile):
         # TODO: Add prep

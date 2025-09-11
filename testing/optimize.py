@@ -2,6 +2,14 @@ from testing.inputfnc2 import InputFile
 from testing.fnc_objects import Function
 from testing.optimization_data import Optimization, Opt
 
+from pymoo.algorithms.moo.nsga2 import NSGA2
+from pymoo.algorithms.moo.nsga3 import NSGA3
+from pymoo.util.ref_dirs import get_reference_directions
+from pymoo.operators.crossover.sbx import SBX
+from pymoo.operators.mutation.pm import PM
+from pymoo.problems.functional import FunctionalProblem
+from pymoo.optimize import minimize
+
 from scipy.optimize import NonlinearConstraint, minimize, OptimizeResult
 from scipy.stats.qmc import LatinHypercube
 import numpy as np
@@ -9,6 +17,8 @@ import itertools
 
 from time import perf_counter
 import warnings
+
+from enum import Enum
 
 warnings.filterwarnings(
     "ignore", category=RuntimeWarning, module="scipy.optimize._slsqp_py"
@@ -50,6 +60,10 @@ def generate_weighted_jacobian(functions: list[Function]) -> callable:
         return np.sum(weighted_jacs, axis=0)
     
     return wrapper
+
+class EvolutionType(Enum):
+    NSGAII  = 0
+    NSGAIII = 1
 
 class Optimize:
     @staticmethod
@@ -189,5 +203,69 @@ class Optimize:
                     'points': points
                 },
                 'success_rate': 1 - failed / total
+            }
+        )
+    
+    @staticmethod
+    def evolve(input: InputFile,
+               generations: int=1000,
+               population: int=200,
+               crossover_rate: float=0.9,
+               mutation_rate: float=0.01,
+               paritions: int=100,
+               algorithm: EvolutionType=EvolutionType.NSGAII,
+               seed: int=0,
+    ) -> Optimization:
+        problem = FunctionalProblem(
+            n_var=len(input.variables),
+            objs=input.objectives,
+            constr_eq=input.equality_constraints,
+            constr_ieq=input.inequality_constraints,
+            xl=[var.min for var in input.variables],
+            xu=[var.max for var in input.variables],
+        )
+        
+        # SBX is simulated binary crossover - 90% probability of mutation
+        # PM is polynomial mutation - 1% probability rate
+        cross = SBX(crossover_rate)
+        poly_mut = PM(prob=mutation_rate)
+        algo = None
+
+        results = {"crs": crossover_rate, "mut": mutation_rate}
+        if algorithm == EvolutionType.NSGAII:
+            algo = NSGA2(pop_size=population, crossover=cross, mutation=poly_mut)
+            results["pop"] = population
+        elif algorithm == EvolutionType.NSGAIII:
+            ref_dirs = get_reference_directions("uniform", len(input.objectives), n_partitions=paritions)
+            algo = NSGA3(pop_size=population, crossover=cross, mutation=poly_mut, ref_dirs=ref_dirs)
+            results["n_parts"] = paritions
+        else:
+            return Exception("Invalid algorithm. Please choose either NSGAII or NSGAIII.")
+
+        t = perf_counter()
+        res = minimize(
+            problem,
+            algo,
+            ('n_gen', generations),
+            seed=seed,
+            verbose=False,
+        )
+        duration = t - perf_counter()
+
+        results["sols"] = res.F
+        results["time"] = duration
+        results["alg"]  = "NSGAII" if algorithm == EvolutionType.NSGAII else "NSGAIII"
+
+        return Optimization(
+            Opt.SUCCESS,
+            {
+                'type': results['alg'],
+                'time': results['time'],
+                'data': {
+                    'crossover_rate': results['crs'],
+                    'mutation_rate': results['mut'],
+                    'pop' if 'pop' in results else 'n_parts': results.get('pop', results.get('n_parts', None)),
+                    'sols': results['sols']
+                }
             }
         )
