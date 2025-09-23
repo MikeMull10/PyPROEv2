@@ -8,8 +8,12 @@ from PySide6.QtGui import QFont
 
 from testing.inputfnc2 import InputFile
 from testing.optimize import Optimize as Opt
+from testing.optimize import EvolutionType
+
+from sections.graph import ToggleWidget, MplWidget
 
 from multiprocessing import Process, Queue
+import numpy as np
 
 from enum import Enum
 
@@ -23,7 +27,10 @@ class METHOD(Enum):
     NSGAII  = 2
     NSGAIII = 3
 
-def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: InputFile, settings: dict):
+def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, settings: dict):
+    file: InputFile = InputFile(file, is_file=False)
+
+    res = None
     ### --- SciPy ---
     if method_type == METHOD_TYPE.SciPy:
         match method:
@@ -51,14 +58,30 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: InputFile,
                     queue.put(["You are a dumbass"])
                     return
 
-                # TODO: Implement NSGAII
+                res = Opt.evolve(
+                    file,
+                    generations=settings.get('generations', 1000),
+                    population=settings.get('population', 200),
+                    crossover_rate=settings.get('crossover', 0.9),
+                    mutation_rate=settings.get('mutation', 0.01),
+                    partitions=settings.get('partition', 100),
+                    algorithm=EvolutionType.NSGAII,
+                )
             case METHOD.NSGAIII:
                 if len(file.objectives) <= 1:
                     queue.put(["You are a dumbass"])
                     return
 
-                # TODO: Implement NSGAIII
-
+                res = Opt.evolve(
+                    file,
+                    generations=settings.get('generations', 1000),
+                    population=settings.get('population', 200),
+                    crossover_rate=settings.get('crossover', 0.9),
+                    mutation_rate=settings.get('mutation', 0.01),
+                    partitions=settings.get('partition', 100),
+                    algorithm=EvolutionType.NSGAIII,
+                )
+        
         queue.put([res])
         return
     
@@ -144,7 +167,6 @@ class OptimizationPage(QWidget):
         self.gridsize.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.gridsize_row = make_row("Grid Size:", self.gridsize)
         self.layout.addWidget(self.gridsize_row)
-        # self.layout.addSpacing(10)
 
         # --- Weight Minimum ---
         self.weight_min = NoTrailingZerosSpinBox()
@@ -156,7 +178,6 @@ class OptimizationPage(QWidget):
         self.weight_min.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_min_row = make_row("Minimum Weight:", self.weight_min)
         self.layout.addWidget(self.weight_min_row)
-        # self.layout.addSpacing(10)
 
         # --- Weight Increment ---
         self.weight_increment = NoTrailingZerosSpinBox()
@@ -168,7 +189,6 @@ class OptimizationPage(QWidget):
         self.weight_increment.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_increment_row = make_row("Weight Increment:", self.weight_increment)
         self.layout.addWidget(self.weight_increment_row)
-        # self.layout.addSpacing(10)
 
         # --- Iterations Row ---
         self.iterations = QSpinBox()
@@ -177,7 +197,6 @@ class OptimizationPage(QWidget):
         self.iterations.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.iterations_row = make_row("Iterations:", self.iterations)
         self.layout.addWidget(self.iterations_row)
-        # self.layout.addSpacing(10)
 
         # --- Population Row ---
         self.population = QSpinBox()
@@ -188,17 +207,27 @@ class OptimizationPage(QWidget):
         self.population.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.population_row = make_row("Population:", self.population)
         self.layout.addWidget(self.population_row)
-        # self.layout.addSpacing(10)
+
+        # --- Crossover ---
+        self.crossover = NoTrailingZerosSpinBox()
+        self.crossover.setDecimals(10)
+        self.crossover.setMinimum(0)
+        self.crossover.setMaximum(1)
+        self.crossover.setValue(0.9)
+        self.crossover.setSingleStep(0.1)
+        self.crossover.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+        self.crossover_row = make_row("Crossover Rate:", self.crossover)
+        self.layout.addWidget(self.crossover_row)
 
         # --- Mutation Row ---
-        self.mutation = QSpinBox()
-        self.mutation.setMinimum(1)
-        self.mutation.setMaximum(100)
-        self.mutation.setValue(1)
+        self.mutation = NoTrailingZerosSpinBox()
+        self.mutation.setDecimals(10)
+        self.mutation.setMinimum(0)
+        self.mutation.setMaximum(1)
+        self.mutation.setValue(0.01)
         self.mutation.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-        self.mutation_row = make_row("Mutation:", self.mutation)
+        self.mutation_row = make_row("Mutation Rate:", self.mutation)
         self.layout.addWidget(self.mutation_row)
-        # self.layout.addSpacing(10)
 
         # --- Partitions Row ---
         self.partitions = QSpinBox()
@@ -208,13 +237,11 @@ class OptimizationPage(QWidget):
         self.partitions.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.partitions_row = make_row("Partitions:", self.partitions)
         self.layout.addWidget(self.partitions_row)
-        # self.layout.addSpacing(10)
 
         self._rebuild()
 
         # --- Buttons ---
         self.start = QPushButton("Start")
-        self.start.pressed.connect(lambda: self._solve(None))
         self.stop  = QPushButton("Stop")
         self.stop.setEnabled(False)
         self.stop.pressed.connect(lambda: self._stop_solve())
@@ -236,9 +263,16 @@ class OptimizationPage(QWidget):
         self.layout.addLayout(self.btns_layout)
 
         main.addLayout(self.layout)
+
         # Add results panel as before
         results = QVBoxLayout()
-        results.addWidget(QLabel("Results", alignment=Qt.AlignCenter))
+
+        # Add your new toggle widget
+        self.toggle = ToggleWidget()
+        self.toggle.setMaximumWidth(self.width() // 2)
+        results.addWidget(self.toggle)
+
+        # Add to main layout
         main.addLayout(results)
 
         ### --- Solving ---
@@ -246,6 +280,7 @@ class OptimizationPage(QWidget):
         self.queue: Queue = Queue()
 
         self.timer: QTimer = QTimer()
+        self.timer.timeout.connect(self._check_process)
 
     def _rebuild(self):
         text = self.solver.currentText()
@@ -254,27 +289,42 @@ class OptimizationPage(QWidget):
         self.weight_increment_row.setVisible(text == "Multi")
         self.iterations_row.setVisible(text in ["NSGAII", "NSGAIII"])
         self.population_row.setVisible(text == "NSGAII")
+        self.crossover_row.setVisible(text in ["NSGAII", "NSGAIII"])
         self.mutation_row.setVisible(text in ["NSGAII", "NSGAIII"])
         self.partitions_row.setVisible(text == "NSGAIII")
     
-    def _solve(self, input: InputFile):
-        # TODO: Add prep
-        settings = {}
+    def _solve(self, input: str):
+        settings = {
+            'gridsize': self.gridsize.value(),
+            'min_weight': self.weight_min.value(),
+            'increment': self.weight_increment.value(),
+            'generations': self.iterations.value(),
+            'population': self.population.value(),
+            'crossover': self.crossover.value(),
+            'mutation': self.mutation.value(),
+            'partitions': self.partitions.value(),
+        }
 
-        # self.process = Process(target=run, args=(self.queue, 
-        #                                          METHOD_TYPE.SciPy, 
-        #                                          METHOD.Single,
-        #                                          input,
-        #                                          settings))
-        # self.process.start()
+        self.process = Process(target=run, args=(self.queue, 
+                                                 METHOD_TYPE.SciPy, 
+                                                 METHOD(self.solver.currentIndex()),
+                                                 input,
+                                                 settings))
+        self.process.start()
 
-        # TODO: Enable/disable start/stop buttons
+        # --- Enable Start & Stop Buttons ---
         self.start.setEnabled(False)
         self.stop .setEnabled(True)
 
         self.timer.start(100)
     
     def _stop_solve(self):
+        if self.process:
+            self.process.terminate()
+            self.process.join()
+
+        self.timer.stop()
+
         self.start.setEnabled(True)
         self.stop .setEnabled(False)
 
@@ -287,3 +337,43 @@ class OptimizationPage(QWidget):
 
         # Set maximum height to one third of the screen height
         self.setMaximumHeight(screen_height // 3)
+
+    def _check_process(self):
+        if self.queue.empty():
+            if not self.process.is_alive():
+                # If the process has finished without sending data
+                self.timer.stop()
+                self.start.setEnabled(True)
+                self.stop.setEnabled(False)
+        else:
+            # If the process has finished and sent a result
+            [data] = self.queue.get()
+            self.timer.stop()
+            self.start.setEnabled(True)
+            self.stop.setEnabled(False)
+
+            self.handle_finish(data)
+    
+    def handle_finish(self, opt: Opt):
+        if opt.data['type'] == 'single':
+            self.toggle.stack.setCurrentIndex(0)
+        else:
+            self.toggle.stack.setCurrentIndex(1)
+
+        self.toggle.text_edit.setText(f"TEST: {opt.data['type']}")
+
+        match opt.data['type']:
+            case 'single':
+                self.toggle.graph.axes(opt.data['data'])
+            case 'multi':
+                points = np.array(opt.data['data']['points'])
+                self.toggle.graph.axes.scatter(points[:, 0], points[:, 1])
+            case _:
+                ...
+
+        self.toggle.graph.draw()
+
+    def resizeEvent(self, event):
+        self.toggle.setMaximumWidth(self.width() // 2)
+        return super().resizeEvent(event)
+    

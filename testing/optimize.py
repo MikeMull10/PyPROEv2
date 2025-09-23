@@ -212,7 +212,7 @@ class Optimize:
                population: int=200,
                crossover_rate: float=0.9,
                mutation_rate: float=0.01,
-               paritions: int=100,
+               partitions: int=100,
                algorithm: EvolutionType=EvolutionType.NSGAII,
                seed: int=0,
     ) -> Optimization:
@@ -236,9 +236,9 @@ class Optimize:
             algo = NSGA2(pop_size=population, crossover=cross, mutation=poly_mut)
             results["pop"] = population
         elif algorithm == EvolutionType.NSGAIII:
-            ref_dirs = get_reference_directions("uniform", len(input.objectives), n_partitions=paritions)
+            ref_dirs = get_reference_directions("uniform", len(input.objectives), n_partitions=partitions)
             algo = NSGA3(pop_size=population, crossover=cross, mutation=poly_mut, ref_dirs=ref_dirs)
-            results["n_parts"] = paritions
+            results["n_parts"] = partitions
         else:
             return Exception("Invalid algorithm. Please choose either NSGAII or NSGAIII.")
 

@@ -84,7 +84,7 @@ class InputFile:
                 self.error_message = str(e)
                 return
         else:
-            data = clean_data(self.file_str)
+            data = clean_data(self.file_str.split('\n'))
 
         flag = -1
         saved = {k: 0 for k in SECTIONS}
@@ -227,7 +227,7 @@ class InputFile:
         return ret
     
     def get_inequality_constraints(self) -> list[NonlinearConstraint]:
-        ret = list[NonlinearConstraint]
+        ret: list[NonlinearConstraint] = []
 
         for ineq in self.inequality_constraints:
             ret.append(NonlinearConstraint(
@@ -242,7 +242,7 @@ class InputFile:
     def get_nonlinear_constraints(self) -> list[NonlinearConstraint]:
         ret: list[NonlinearConstraint] = []
         
-        ret.append(self.get_equality_constraints())
-        ret.append(self.get_inequality_constraints())
+        ret += self.get_equality_constraints()
+        ret += self.get_inequality_constraints()
         
         return ret

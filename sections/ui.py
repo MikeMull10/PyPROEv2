@@ -17,6 +17,8 @@ from sections.metamodelling import MetamodelPage
 
 from basics.settings import SettingsManager
 
+from testing.inputfnc2 import InputFile
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -34,6 +36,9 @@ class MainWindow(QMainWindow):
         self.doe = DesignOfExperimentsPage()
         self.mmd = MetamodelPage()
         self.opt = OptimizationPage()
+
+        # --- Page Connections ---
+        self.opt.start.pressed.connect(self._start_opt)
 
         # --- Central widget with scrollable pages ---
         container = QWidget()
@@ -130,3 +135,13 @@ class MainWindow(QMainWindow):
                 self.frm.layout.setText(data)
             except:
                 print("FAIL")
+    
+    def _start_opt(self):
+        fnc = self.frm.layout.toPlainText()
+
+        file = InputFile(fnc, is_file=False)
+        if file.error:
+            print(f"ERROR: {file.error_message}")
+            return
+        
+        self.opt._solve(fnc)
