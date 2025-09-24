@@ -348,4 +348,5 @@ WARM_GREY_9 = "#FAF9F7"
 
 # === WHITE & BLACK
 WHITE = "#FFFFFF"
+OFF_WHITE = "#eeeeee"
 BLACK = "#000000"

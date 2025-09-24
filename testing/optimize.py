@@ -108,7 +108,7 @@ class Optimize:
                 failed += 1
         
         opt_end_time = perf_counter()
-        print(f"FAILED: {failed} / {grid_size ** len(input.variables)} ({(100 * failed / (grid_size ** len(input.variables))):2f}%)")
+        # print(f"FAILED: {failed} / {grid_size ** len(input.variables)} ({(100 * failed / (grid_size ** len(input.variables))):2f}%)")
         if best is None:
             return Optimization(Opt.FAILED, f"No successful solution found with {grid_size ** len(input.variables)} initial points.")
         

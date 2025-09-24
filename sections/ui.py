@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
             self.settings.set('previous_open_file_dir', self.open_file_name)
 
             try:
-                with open('testing/Binh&Korn.fnc', 'r') as file:
+                with open(self.open_file_name, 'r') as file:
                     data = file.read()
 
                 self.frm.layout.setText(data)

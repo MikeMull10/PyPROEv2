@@ -1,4 +1,6 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QLabel, QPushButton, QTextEdit
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QPushButton, QTextEdit, QDialog, QLabel
+from PySide6.QtCore import Qt
+from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
@@ -8,6 +10,7 @@ class MplWidget(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100, nav=False):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = self.fig.add_subplot(111)
+        self.points = []
         super().__init__(self.fig)
     
     def delete_fig(self):
@@ -16,6 +19,9 @@ class MplWidget(FigureCanvasQTAgg):
     def __del__(self):
         self.delete_fig()
 
+    def plot(self, points):
+        self.points = points
+        self.axes.scatter(*[points[:, i] for i in range(len(points[0]))])
 
 class ToggleWidget(QWidget):
     def __init__(self, parent=None):
@@ -30,20 +36,31 @@ class ToggleWidget(QWidget):
 
         # graph widget
         self.graph = MplWidget()
-        # self.graph.axes.plot([0, 1, 2, 3], [10, 1, 20, 3])  # example plot
 
         # add both to stack
         self.stack.addWidget(self.text_edit)  # index 0
         self.stack.addWidget(self.graph)      # index 1
 
+        self.btns = QHBoxLayout()
+
         # toggle button
         self.toggle_btn = QPushButton("Toggle View")
         self.toggle_btn.clicked.connect(self.toggle_view)
 
+        # popout button
+        self.popout_btn = QPushButton("View in Fullscreen")
+        self.popout_btn.clicked.connect(self.create_popout)
+
+        self.toggle_btn.setCursor(Qt.PointingHandCursor)
+        self.popout_btn.setCursor(Qt.PointingHandCursor)
+
+        self.btns.addWidget(self.toggle_btn)
+        self.btns.addWidget(self.popout_btn)
+
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.stack)
-        layout.addWidget(self.toggle_btn)
+        layout.addLayout(self.btns)
 
         self.setLayout(layout)
 
@@ -53,3 +70,66 @@ class ToggleWidget(QWidget):
     def toggle_view(self):
         current = self.stack.currentIndex()
         self.stack.setCurrentIndex(1 if current == 0 else 0)
+    
+    def create_popout(self):
+        if self.stack.currentIndex() == 0:
+            self.show_text_popup()
+        else:
+            self.show_graph_popup()
+
+    def show_text_popup(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Edit Text")
+        dialog.resize(800, 600)
+        layout = QVBoxLayout(dialog)
+
+        editor = QTextEdit()
+        editor.setPlainText(self.text_edit.toPlainText())  # copy current text
+        layout.addWidget(editor)
+
+        save_btn = QPushButton("Close")
+        layout.addWidget(save_btn)
+
+        def save_and_close():
+            self.text_edit.setPlainText(editor.toPlainText())  # push changes back
+            dialog.accept()
+
+        save_btn.clicked.connect(save_and_close)
+
+        dialog.exec()
+
+    def show_graph_popup(self):
+        dialog = QDialog()
+        dialog.setWindowTitle("Optimization Results Graph")
+        layout = QVBoxLayout()
+
+        graphWidget = MplWidget(self, width=5, height=4, dpi=100)
+
+        single = len(self.graph.points) == 1
+        x = [p[0] for p in self.graph.points]
+        y = [p[1] for p in self.graph.points]
+
+        graphWidget.axes.scatter(x, y, c="b", marker="o", s=20 if single else 5)
+        graphWidget.axes.set_title("Pareto Front" if not single else "Solution")
+        graphWidget.axes.set_xlabel("$f_1(x)$" if not single else "$X_1$")
+        graphWidget.axes.set_ylabel("$f_2(x)$" if not single else "$X_2$")
+        graphWidget.axes.grid(True)
+
+        toolbar = NavigationToolbar(graphWidget, dialog)
+        toolbar.setStyleSheet(
+            """
+            QToolButton {
+                background-color: transparent;
+                color: white;
+            }
+        """
+        )
+        for child in toolbar.children():
+            if isinstance(child, QLabel):
+                child.setStyleSheet("color: white;")
+
+        layout.addWidget(toolbar)
+        layout.addWidget(graphWidget)
+        dialog.setLayout(layout)
+
+        dialog.exec()

@@ -15,12 +15,12 @@ QMenuBar::item {
 }
 
 QMenuBar::item:selected {
-    color: #fff;
+    color: #ddd;
     background: #555;
 }
 
 QMenuBar::item:pressed {
-    color: #fff;
+    color: #ddd;
     background: #3b3b3b;
 }
 

@@ -11,7 +11,7 @@ THEME = {
     },
     "Base_Color": {
         'Light': BLACK,
-        'Dark':  WHITE,
+        'Dark':  OFF_WHITE,
     },
     "Btn_Opt_Start_BG": {
         'Light': {

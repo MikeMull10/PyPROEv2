@@ -28,6 +28,7 @@ class METHOD(Enum):
     NSGAIII = 3
 
 def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, settings: dict):
+    file_str = file
     file: InputFile = InputFile(file, is_file=False)
 
     res = None
@@ -82,6 +83,8 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
                     algorithm=EvolutionType.NSGAIII,
                 )
         
+        if res:
+            res.fnc = file_str
         queue.put([res])
         return
     
@@ -174,7 +177,7 @@ class OptimizationPage(QWidget):
         self.weight_min.setSingleStep(0.01)
         self.weight_min.setMinimum(0)
         self.weight_min.setMaximum(1)
-        self.weight_min.setValue(0.1)
+        self.weight_min.setValue(0.01)
         self.weight_min.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_min_row = make_row("Minimum Weight:", self.weight_min)
         self.layout.addWidget(self.weight_min_row)
@@ -185,7 +188,7 @@ class OptimizationPage(QWidget):
         self.weight_increment.setSingleStep(0.01)
         self.weight_increment.setMinimum(1e-6)
         self.weight_increment.setMaximum(0.1)
-        self.weight_increment.setValue(0.1)
+        self.weight_increment.setValue(0.01)
         self.weight_increment.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_increment_row = make_row("Weight Increment:", self.weight_increment)
         self.layout.addWidget(self.weight_increment_row)
@@ -355,19 +358,18 @@ class OptimizationPage(QWidget):
             self.handle_finish(data)
     
     def handle_finish(self, opt: Opt):
-        if opt.data['type'] == 'single':
+        if opt['type'] == 'single':
             self.toggle.stack.setCurrentIndex(0)
         else:
             self.toggle.stack.setCurrentIndex(1)
 
-        self.toggle.text_edit.setText(f"TEST: {opt.data['type']}")
+        self.toggle.text_edit.setText(str(opt))
 
-        match opt.data['type']:
+        match opt['type']:
             case 'single':
-                self.toggle.graph.axes(opt.data['data'])
+                self.toggle.graph.plot(np.array([opt['data'].x]))
             case 'multi':
-                points = np.array(opt.data['data']['points'])
-                self.toggle.graph.axes.scatter(points[:, 0], points[:, 1])
+                self.toggle.graph.plot(np.array(opt['data']['points']))
             case _:
                 ...
 
