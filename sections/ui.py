@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(scroll)
 
         # --- Setup ---
-        self._update_stylesheet()
+        # self._update_stylesheet()
         self._setup_commands()
         self._setup_menu()
 

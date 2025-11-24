@@ -10,6 +10,7 @@ from sections.ui import MainWindow
 from handlers.stylesheet import load_stylesheet, resource_path
 
 from pathlib import Path
+import qdarktheme
 
 
 if __name__ == "__main__":
@@ -18,6 +19,8 @@ if __name__ == "__main__":
 
     # initializee a QApplication
     app = QApplication([])
+    # app.setStyle("Fusion")
+    app.setStyleSheet(qdarktheme.load_stylesheet())
 
     # Create the splash screen
     splash_pix = QPixmap(resource_path("assets/pyproe-logo.png"))  # Replace with your image path

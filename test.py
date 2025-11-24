@@ -33,10 +33,15 @@ def test():
     print(d['time'])
 
 if __name__ == "__main__":
-    # level = logging.DEBUG
-    # fmt = '[%(levelname)s] %(asctime)s %(message)s'
-    # logging.basicConfig(level=level, format=fmt)
+    level = logging.DEBUG
+    fmt = '[%(levelname)s] %(asctime)s %(message)s'
+    logging.basicConfig(level=level, format=fmt)
     
+    f = InputFile("testing/ln.fnc")
+    print(f.functions[0].gradient_exprs)
+    # f = InputFile("testing/381-HW#4.fnc")
+    # print(f.functions[0].gradient_exprs)
+    exit()
     # f = InputFile("testing/381-HW#4.fnc")
     # f = InputFile("testing/Test.fnc")
     # f = InputFile("testing/ZDT1.fnc")
