@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         # --- Window setup ---
         self.setWindowTitle("PyPROE X")
         self.setWindowIcon(QIcon(resource_path("assets/pyproe-logo.png")))
-        self.resize(1200, 800)  # width, height
+        self.resize(1200, 800)
         self.showMaximized()
 
         self.settings = SettingsManager(self)

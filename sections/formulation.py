@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
-from stylesheet.stylesheet import get_stylesheet
+from qfluentwidgets import TextEdit
 
 class FormulationPage(QWidget):
     def __init__(self):
@@ -14,6 +14,6 @@ class FormulationPage(QWidget):
 
         main = QVBoxLayout(self)
 
-        self.layout: QTextEdit = QTextEdit()
+        self.layout: TextEdit = TextEdit()
 
         main.addWidget(self.layout)

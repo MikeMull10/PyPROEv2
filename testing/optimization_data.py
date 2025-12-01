@@ -30,6 +30,9 @@ class Optimization:
         if isinstance(self.fnc, str):
             self.fnc = InputFile(self.fnc, is_file=False)
 
+        if self.status == Opt.FAILED:
+            return "FAILED"
+
         results = self.data.get('data', None)
         if not results or not self.fnc: return ""
 

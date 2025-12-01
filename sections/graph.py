@@ -5,6 +5,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
+from qfluentwidgets import TextEdit, PushButton
+
 
 class MplWidget(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100, nav=False):
@@ -31,7 +33,7 @@ class ToggleWidget(QWidget):
         self.stack = QStackedWidget()
 
         # text widget
-        self.text_edit = QTextEdit()
+        self.text_edit = TextEdit()
         self.text_edit.setPlaceholderText("Results...")
 
         # graph widget
@@ -44,11 +46,11 @@ class ToggleWidget(QWidget):
         self.btns = QHBoxLayout()
 
         # toggle button
-        self.toggle_btn = QPushButton("Toggle View")
+        self.toggle_btn = PushButton("Toggle View")
         self.toggle_btn.clicked.connect(self.toggle_view)
 
         # popout button
-        self.popout_btn = QPushButton("View in Fullscreen")
+        self.popout_btn = PushButton("View in Fullscreen")
         self.popout_btn.clicked.connect(self.create_popout)
 
         self.toggle_btn.setCursor(Qt.PointingHandCursor)
@@ -83,11 +85,11 @@ class ToggleWidget(QWidget):
         dialog.resize(800, 600)
         layout = QVBoxLayout(dialog)
 
-        editor = QTextEdit()
+        editor = TextEdit()
         editor.setPlainText(self.text_edit.toPlainText())  # copy current text
         layout.addWidget(editor)
 
-        save_btn = QPushButton("Close")
+        save_btn = PushButton("Close")
         layout.addWidget(save_btn)
 
         def save_and_close():

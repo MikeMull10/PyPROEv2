@@ -6,9 +6,13 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 
+from qfluentwidgets import SpinBox, DoubleSpinBox, ComboBox, PushButton, SubtitleLabel
+
 from testing.inputfnc2 import InputFile
 from testing.optimize import Optimize as Opt
 from testing.optimize import EvolutionType
+from testing.optimization_data import Opt as OptStatus
+from testing.optimization_data import Optimization as OptObj
 
 from sections.graph import ToggleWidget, MplWidget
 
@@ -56,7 +60,7 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
                 )
             case METHOD.NSGAII:
                 if len(file.objectives) <= 1:
-                    queue.put(["You are a dumbass"])
+                    queue.put(["Error"])
                     return
 
                 res = Opt.evolve(
@@ -70,7 +74,7 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
                 )
             case METHOD.NSGAIII:
                 if len(file.objectives) <= 1:
-                    queue.put(["You are a dumbass"])
+                    queue.put(["Error"])
                     return
 
                 res = Opt.evolve(
@@ -99,25 +103,20 @@ def clear_layout(layout: QLayout):
 
         w = item.widget()
         if w is not None:
-            # detach + schedule destruction
             w.setParent(None)
             w.deleteLater()
             continue
 
         child = item.layout()
         if child is not None:
-            clear_layout(child)          # recurse
+            clear_layout(child)
             child.setParent(None)
             child.deleteLater()
 
-        # QSpacerItem? nothing to do; it’s owned by the layout item and will be GC’d
-
-    # tidy up geometry
     layout.invalidate()
-    # let deleteLater() run if you need it to disappear immediately
     QApplication.processEvents()
 
-class NoTrailingZerosSpinBox(QDoubleSpinBox):
+class NoTrailingZerosSpinBox(DoubleSpinBox):
     def textFromValue(self, value: float) -> str:
         # Format without trailing zeros
         return ('{0:.10f}'.format(value)).rstrip('0').rstrip('.') 
@@ -141,21 +140,21 @@ class OptimizationPage(QWidget):
             layout = QHBoxLayout(row)
             layout.setContentsMargins(0, 0, 0, 0)
             layout.setSpacing(5)
-            label = QLabel(label_text)
+            label = SubtitleLabel(label_text)
             layout.addWidget(label)
             layout.addWidget(widget)
             row.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             return row
 
         # --- Solver Type Row ---
-        self.solver_type = QComboBox()
+        self.solver_type = ComboBox()
         self.solver_type.addItems(["SciPy", "GimOPT"])
         self.solver_type_row = make_row("Solver:", self.solver_type)
         self.layout.addWidget(self.solver_type_row)
         self.layout.addSpacing(10)
 
         # --- Solver Row ---
-        self.solver = QComboBox()
+        self.solver = ComboBox()
         self.solver.addItems(["Single", "Multi", "NSGAII", "NSGAIII"])
         self.solver.currentTextChanged.connect(self._rebuild)
         self.solver_row = make_row("Solver Type:", self.solver)
@@ -164,11 +163,12 @@ class OptimizationPage(QWidget):
 
         ### --- Solver Options ---
         # --- Grid Size Row ---
-        self.gridsize = QSpinBox()
+        self.gridsize = SpinBox()
         self.gridsize.setValue(5)
         self.gridsize.setMaximum(10000)
         self.gridsize.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.gridsize_row = make_row("Grid Size:", self.gridsize)
+        self.gridsize_row.setToolTip("Determines the number of equally spaced samples generated along each dimension in the grid. A higher grid size increases the number of guesses by creating a finer grid, while a lower grid size reduces the number of guesses by creating a coarser grid.")
         self.layout.addWidget(self.gridsize_row)
 
         # --- Weight Minimum ---
@@ -180,6 +180,7 @@ class OptimizationPage(QWidget):
         self.weight_min.setValue(0.01)
         self.weight_min.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_min_row = make_row("Minimum Weight:", self.weight_min)
+        self.weight_min_row.setToolTip("Defines the lower bound for weights in weighted formulations.")
         self.layout.addWidget(self.weight_min_row)
 
         # --- Weight Increment ---
@@ -191,24 +192,27 @@ class OptimizationPage(QWidget):
         self.weight_increment.setValue(0.01)
         self.weight_increment.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.weight_increment_row = make_row("Weight Increment:", self.weight_increment)
+        self.weight_increment_row.setToolTip("Defines the adjustment interval for weights.")
         self.layout.addWidget(self.weight_increment_row)
 
         # --- Iterations Row ---
-        self.iterations = QSpinBox()
+        self.iterations = SpinBox()
         self.iterations.setMaximum(100000)
         self.iterations.setValue(1000)
         self.iterations.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.iterations_row = make_row("Iterations:", self.iterations)
+        self.iterations_row.setToolTip("Defines the number of cycles the algorithm will run.")
         self.layout.addWidget(self.iterations_row)
 
         # --- Population Row ---
-        self.population = QSpinBox()
+        self.population = SpinBox()
         self.population.setMinimum(1)
         self.population.setMaximum(10000)
         self.population.setValue(100)
         self.population.setSingleStep(100)
         self.population.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.population_row = make_row("Population:", self.population)
+        self.population_row.setToolTip("Defines the number of candidate solutions in the optimization process.")
         self.layout.addWidget(self.population_row)
 
         # --- Crossover ---
@@ -220,20 +224,23 @@ class OptimizationPage(QWidget):
         self.crossover.setSingleStep(0.1)
         self.crossover.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.crossover_row = make_row("Crossover Rate:", self.crossover)
+        self.crossover_row.setToolTip("Defines the frequency of random genetic changes.")
         self.layout.addWidget(self.crossover_row)
 
         # --- Mutation Row ---
         self.mutation = NoTrailingZerosSpinBox()
         self.mutation.setDecimals(10)
-        self.mutation.setMinimum(0)
+        self.mutation.setMinimum(1e-10)
         self.mutation.setMaximum(1)
         self.mutation.setValue(0.01)
+        self.mutation.setSingleStep(0.1)
         self.mutation.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
         self.mutation_row = make_row("Mutation Rate:", self.mutation)
+        self.mutation_row.setToolTip("Controls the probability of recombination.")
         self.layout.addWidget(self.mutation_row)
 
         # --- Partitions Row ---
-        self.partitions = QSpinBox()
+        self.partitions = SpinBox()
         self.partitions.setMinimum(0)
         self.partitions.setMaximum(1e6)
         self.partitions.setValue(100)
@@ -244,19 +251,14 @@ class OptimizationPage(QWidget):
         self._rebuild()
 
         # --- Buttons ---
-        self.start = QPushButton("Start")
-        self.stop  = QPushButton("Stop")
+        self.start = PushButton("Start")
+        self.stop  = PushButton("Stop")
         self.stop.setEnabled(False)
         self.stop.pressed.connect(lambda: self._stop_solve())
-        self.clear = QPushButton("Clear")
+        self.clear = PushButton("Clear")
         for btn, name in zip([self.start, self.stop, self.clear], ["btnOptStart", "btnOptStop", "btnOptClear"]):
             btn.setObjectName(name)
             btn.setCursor(Qt.PointingHandCursor)
-
-            font = btn.font()
-            font.setBold(True)
-            font.setWeight(QFont.Weight.Bold)
-            btn.setFont(font)
 
         self.btns_layout = QHBoxLayout()
         self.btns_layout.addWidget(self.start)
@@ -357,7 +359,10 @@ class OptimizationPage(QWidget):
 
             self.handle_finish(data)
     
-    def handle_finish(self, opt: Opt):
+    def handle_finish(self, opt: OptObj):
+        if opt.status == OptStatus.FAILED:
+            return
+
         if opt['type'] == 'single':
             self.toggle.stack.setCurrentIndex(0)
         else:

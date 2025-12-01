@@ -1,6 +1,6 @@
 from pages.mainwindow import Ui_MainWindow
-from PyPROE.handlers.filereader import TextFileReader
-from PyPROE.handlers.filewriter import TextFileWriter
+from handlers.filereader import TextFileReader
+from handlers.filewriter import TextFileWriter
 
 
 class Writer:
