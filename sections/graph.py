@@ -62,6 +62,7 @@ class ToggleWidget(QWidget):
         # layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.stack)
+        # layout.addStretch()
         layout.addLayout(self.btns)
 
         self.setLayout(layout)

@@ -269,15 +269,12 @@ class OptimizationPage(QWidget):
 
         main.addLayout(self.layout)
 
-        # Add results panel as before
         results = QVBoxLayout()
 
-        # Add your new toggle widget
         self.toggle = ToggleWidget()
         self.toggle.setMaximumWidth(self.width() // 2)
         results.addWidget(self.toggle)
 
-        # Add to main layout
         main.addLayout(results)
 
         ### --- Solving ---
