@@ -1,10 +1,7 @@
-from PySide6.QtWidgets import QVBoxLayout, QWidget, QDialog
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 from PySide6.QtCore import Qt, QSize
 
-from qfluentwidgets import (
-    MessageBoxBase, PrimaryPushButton, PushButton,
-    PlainTextEdit, TitleLabel
-)
+from qfluentwidgets import MessageBoxBase, PushButton, PlainTextEdit
 
 def clamp_text(text: str, size: int):
     ret = ""

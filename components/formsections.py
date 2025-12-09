@@ -91,6 +91,9 @@ class FormSection(QWidget):
 
         self.swap_rows(index, index - (1 if dir == "UP" else -1))
 
+    def get_fnc(self) -> str:
+        raise NotImplementedError
+
 class VariablesSection(FormSection):
     def __init__(self):
         super().__init__("Variables")
@@ -104,6 +107,16 @@ class VariablesSection(FormSection):
 
         super().add_row(item)
     
+    def get_fnc(self) -> str:
+        ret = f"*VARIABLE: {self.row_container.count()}\n\n"
+
+        for i in range(self.row_container.count()):
+            item: VariableItem = self.row_container.itemAt(i).widget()
+
+            ret += f"{item.var_box.text()}: {item.min_box.text()}, {item.max_box.text()}\n"
+
+        return ret
+    
 class ConstantsSection(FormSection):
     def __init__(self):
         super().__init__("Constants")
@@ -116,6 +129,16 @@ class ConstantsSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+    
+    def get_fnc(self):
+        ret = f"*CONSTANT: {self.row_container.count()}\n\n"
+
+        for i in range(self.row_container.count()):
+            item: ConstantItem = self.row_container.itemAt(i).widget()
+
+            ret += f"{item.name_box.text()} = {item.value_box.text()};\n"
+        
+        return ret
 
 class ObjectivesSection(FormSection):
     def __init__(self):
@@ -130,6 +153,16 @@ class ObjectivesSection(FormSection):
 
         super().add_row(item)
 
+    def get_fnc(self):
+        ret = f"*OBJECTIVE: {self.row_container.count()}\n\n"
+
+        for i in range(self.row_container.count()):
+            item: ObjectiveItem = self.row_container.itemAt(i).widget()
+
+            ret += f"{item.name_box.text()} = {item.value_box.text()};\n"
+
+        return ret
+
 class EqualitiesSection(FormSection):
     def __init__(self, parent=None):
         super().__init__("Equality-Constraints")
@@ -143,6 +176,24 @@ class EqualitiesSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+    
+    def get_fnc(self):
+        ret = f"*EQUALITY-CONSTRAINT: {self.row_container.count()}\n\n"
+
+        for i in range(self.row_container.count()):
+            item: EqualityItem = self.row_container.itemAt(i).widget()
+            
+            eq_text = item.eq_box.text().strip()
+            sign = '+' if eq_text.startswith('-') else '-'
+            eq = eq_text[1:] if eq_text.startswith('-') else eq_text
+
+            if eq_text == "0.0" or eq_text == "0":
+                ret += f"{item.name_box.text()} = {item.value_box.text()};\n"
+                continue
+
+            ret += f"{item.name_box.text()} = {item.value_box.text()} {sign} {eq};\n"
+
+        return ret
 
 class InequalitiesSection(FormSection):
     def __init__(self, parent=None):
@@ -157,11 +208,33 @@ class InequalitiesSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+    
+    def get_fnc(self):
+        ret = f"*INEQUALITY-CONSTRAINT: {self.row_container.count()}\n\n"
+
+        for i in range(self.row_container.count()):
+            item: InequalityItem = self.row_container.itemAt(i).widget()
+            
+            ineq_text = item.eq_box.text().strip()
+            sign = '+' if ineq_text.startswith('-') else '-'
+            ineq = ineq_text[1:] if ineq_text.startswith('-') else ineq_text
+
+            if ineq_text == "0.0" or ineq_text == "0":
+                ret += f"{item.name_box.text()} = {item.value_box.text()};\n"
+                continue
+            
+            if item.flip.leq:
+                ret += f"{item.name_box.text()} = {item.value_box.text()} {sign} {ineq};\n"
+            else:
+                ret += f"{item.name_box.text()} = -({item.value_box.text()} {sign} {ineq});\n"
+
+        return ret
 
 class FunctionsSection(FormSection):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, function_name_update: callable=None):
         super().__init__("Functions")
         self.parent = parent
+        self.function_name_update = function_name_update
 
     def add_row(self, name: str = None, value: str = ""):
         if not name:
@@ -171,3 +244,18 @@ class FunctionsSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+        self.function_name_update()
+
+    def delete_item(self, item):
+        super().delete_item(item)
+        self.function_name_update()
+    
+    def get_fnc(self):
+        ret = f"*FUNCTION: {self.row_container.count()}\n\n"
+
+        for i in range(self.row_container.count()):
+            item: FunctionItem = self.row_container.itemAt(i).widget()
+
+            ret += f"{item.name_box.text()} = {item.value_box.text()};\n"
+
+        return ret

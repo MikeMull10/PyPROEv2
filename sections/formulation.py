@@ -2,9 +2,9 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit
 )
 from PySide6.QtCore import Qt
-from qfluentwidgets import ScrollArea, SmoothScrollArea, CardWidget, TextEdit, TitleLabel, SubtitleLabel, PushButton, ToolButton, FluentIcon as FI
+from qfluentwidgets import ScrollArea, SmoothScrollArea, CardWidget, TextEdit, TitleLabel, SubtitleLabel, PushButton, ToolButton, EditableComboBox, FluentIcon as FI
 
-from components.formsections import VariablesSection, ConstantsSection, ObjectivesSection, FunctionsSection, EqualitiesSection, InequalitiesSection
+from components.formsections import VariablesSection, ConstantsSection, ObjectivesSection, FunctionsSection, EqualitiesSection, InequalitiesSection, FunctionItem, ObjectiveItem, InequalityItem, EqualityItem
 from components.function_parse import parse_function_offset
 from testing.inputfnc2 import InputFile
 import os
@@ -12,6 +12,7 @@ import os
 class FormulationPage(QWidget):
     def __init__(self, parent=None):
         super().__init__()
+        self.function_names = set()
 
         self.setObjectName("Formulation")
         self.setFixedWidth(550)
@@ -38,7 +39,7 @@ class FormulationPage(QWidget):
         self.obj_section = ObjectivesSection()
         self.eqs_section = EqualitiesSection()
         self.iqs_section = InequalitiesSection()
-        self.fnc_section = FunctionsSection(parent)
+        self.fnc_section = FunctionsSection(parent, self.update_function_names)
         
         main_layout.addWidget(self.var_section)
         main_layout.addWidget(self.con_section)
@@ -48,6 +49,29 @@ class FormulationPage(QWidget):
         main_layout.addWidget(self.fnc_section)
 
         main_layout.addStretch()
+
+    def update_options(self, box: ObjectiveItem | EqualityItem | InequalityItem):
+        box_value = box.value_box.text()
+        is_custom = box.value_box.currentIndex() == -1 or box_value in box.value_box.items
+
+        box.value_box.clear()
+        box.value_box.addItems(sorted(self.function_names))
+
+        if is_custom or box_value in self.function_names:
+            box.value_box.setText(box_value)
+        else:
+            box.value_box.setText("")
+    
+    def update_function_names(self):
+        self.function_names.clear()
+        for i in range(self.fnc_section.row_container.count()):
+            item: FunctionItem = self.fnc_section.row_container.itemAt(i).widget()
+            self.function_names.add(item.name)
+        
+        ### Objectives, Equality Constraints, and Inequality Constraints
+        for section_type in [self.obj_section, self.eqs_section, self.iqs_section]:
+            for i in range(section_type.row_container.count()):
+                self.update_options(section_type.row_container.itemAt(i).widget())            
 
     def load_from_file(self, file_path):
         try:
@@ -100,3 +124,17 @@ class FormulationPage(QWidget):
 
         except Exception as e:
             print("Failed to load file:", e)
+
+    def convert_to_fnc(self):
+        fnc_str  = f"#{'-' * 50}\n"
+        fnc_str += "# Input File Start\n"
+        fnc_str += f"#{'-' * 50}\n\n"
+
+        for section in [self.var_section, self.con_section, self.obj_section, self.eqs_section, self.iqs_section, self.fnc_section]:
+            fnc_str += section.get_fnc() + "\n"
+
+        fnc_str += f"#{'-' * 50}\n"
+        fnc_str += "# Input File End\n"
+        fnc_str += f"#{'-' * 50}"
+
+        return fnc_str

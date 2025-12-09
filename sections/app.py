@@ -7,18 +7,20 @@ from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage
 from qfluentwidgets import (
     FluentWindow, setTheme, setThemeColor, Theme, CommandBar, Action, FluentTitleBar, PushButton, FlyoutView,
-    Dialog, LineEdit, PrimaryPushButton, ToolButton, NavigationItemPosition, FluentIcon as FI
+    NavigationPushButton, LineEdit, PrimaryPushButton, ToolButton, NavigationItemPosition, FluentIcon as FI
 )
 
 from sections.designofexperiments import DesignOfExperimentsPage
 from sections.optimization import OptimizationPage
 from sections.formulation import FormulationPage
 from sections.metamodelling import MetamodelPage
-from sections.settingspage import SettingsPage
+from sections.settingspage import SettingsPage, is_valid_hex_color
 from sections.mainpage import MainPage
 
 from testing.inputfnc2 import InputFile
 from stylesheet.accents import ACCENT_COLORS
+
+from components.helppopup import DocumentationPopup
 
 
 class App(FluentWindow):
@@ -31,8 +33,7 @@ class App(FluentWindow):
 
         # --- SETTINGS ---
         self.settings = QSettings("PyPROE", "PyPROE App")
-        setTheme(Theme.DARK if self.settings.value("theme") == "Dark" else Theme.LIGHT)
-        setThemeColor(ACCENT_COLORS.get(self.settings.value("accent"), ACCENT_COLORS.get("Red")))
+        self.set_app_theme()
 
         # --- PAGES ---
         self.frm = FormulationPage(self)
@@ -53,41 +54,45 @@ class App(FluentWindow):
 
     def init_navigation(self):
         """ Correct way to add sub-pages in FluentWindow """
-        self.navigationInterface.addItem(
+        open_btn = NavigationPushButton(FI.FOLDER_ADD, "Open File", isSelectable=False)
+        save_btn = NavigationPushButton(FI.SAVE_AS, "Save File", isSelectable=False)
+        open_btn.clicked.connect(self._open_file)
+        save_btn.clicked.connect(self._save_file)
+        self.navigationInterface.addWidget(
             routeKey="open-file",
-            icon=FI.FOLDER_ADD,
-            text="Open File",
-            onClick=self._open_file
+            widget=open_btn
         )
-        self.navigationInterface.addItem(
+        self.navigationInterface.addWidget(
             routeKey="save-file",
-            icon=FI.SAVE_AS,
-            text="Save File",
-            onClick=self._save_file
+            widget=save_btn
         )
         self.navigationInterface.addSeparator()
         self.addSubInterface(self.main_page, FI.HOME, "Main")
-        # self.addSubInterface(self.frm, FI.EDIT, "Formulation")
-        # self.addSubInterface(self.doe, FI.APPLICATION, "DOE")
-        # self.addSubInterface(self.mmd, FI.HOME, "Metamodeling")
-        # self.addSubInterface(self.opt, FI.GAME, "Optimization")
         self.navigationInterface.addSeparator()
+        self.navigationInterface.addSeparator(position=NavigationItemPosition.BOTTOM)
         self.navigationInterface.addItem(
             routeKey="show-help",
             icon=FI.QUESTION,
             text="View Documentation",
-            onClick=self.create_help_popup
+            onClick=self.show_documentation,
+            position=NavigationItemPosition.BOTTOM,
         )
         self.addSubInterface(self.page_settings, FI.SETTING, "Settings", NavigationItemPosition.BOTTOM)
 
     # Shortcuts / Menus
     def init_shortcuts(self):
         QApplication.instance().quit()
-        QShortcut(QKeySequence("Ctrl+Q"), self).activated.connect(self.close_application)
+        QShortcut(QKeySequence("Ctrl+Q"), self).activated.connect(self._close_application)
         QShortcut(QKeySequence("Ctrl+O"), self).activated.connect(self._open_file)
 
     # Functional Logic
-    def close_application(self):
+    def _close_application(self):
+        # Close threaded optimization process if running
+        p = self.opt.process
+        if p and p.is_alive():
+            p.terminate()
+            p.join()
+
         QApplication.instance().quit()
 
     def _open_file(self):
@@ -107,10 +112,21 @@ class App(FluentWindow):
                 self.frm.load_from_file(file_path=filename)
     
     def _save_file(self):
-        ...
+        saveFile = QFileDialog(
+            self,
+            "Save File",
+            self.settings.value("previous_open_file_dir"),
+            "Optimization function files (*.fnc)"
+        )
+        saveFile.setFileMode(QFileDialog.AnyFile)
+        saveFile.setAcceptMode(QFileDialog.AcceptSave)
+
+        if saveFile.exec():
+            with open(saveFile.selectedFiles()[0], 'w') as file:
+                file.write(self.frm.convert_to_fnc())
 
     def _start_opt(self):
-        fnc = self.frm.layout.toPlainText()
+        fnc = self.frm.convert_to_fnc()
 
         file = InputFile(fnc, is_file=False)
         if file.error:
@@ -119,72 +135,21 @@ class App(FluentWindow):
 
         self.opt._solve(fnc)
 
-    def create_help_popup(self):
-        # --- QFluent Dialog ---
-        view = FlyoutView(
-            title='PyPROE Documentation',
-            content="",
-            isClosable=True
-        )
-        popup = Dialog(self)
-        popup.setWindowTitle("PyPROE Documentation")
+    def show_documentation(self):
+        popup = DocumentationPopup(self)
+        popup.exec()
+    
+    def set_app_theme(self):
+        setTheme(Theme.DARK if self.settings.value("theme") == "Dark" else Theme.LIGHT)
 
-        popup.resize(1200, 800)
-        popup.showFullScreen()
+        if self.settings.value("accent") == "Custom":
+            valid = is_valid_hex_color(self.settings.value("custom_accent"))
 
-        # --- WebEngineView ---
-        with open("html/help.html", "r") as file:
-            html_content = file.read()
+            if valid:
+                setThemeColor(self.settings.value("custom_accent"))
+                return
+            
+            setThemeColor("#000000")
+            return
 
-        web = QWebEngineView()
-        web.setHtml(html_content)
-
-        # --- Search Bar (QFluent LineEdit) ---
-        search_bar = LineEdit()
-        search_bar.setPlaceholderText("Search...")
-
-        # --- Fluent Buttons ---
-        search_btn = PrimaryPushButton("Search", FI.SEARCH)
-        next_btn   = ToolButton(FI.CARET_RIGHT)
-        prev_btn   = ToolButton(FI.CARET_LEFT)
-
-        # Track last search
-        current_term = {"text": ""}
-
-        # --- Search Functions ---
-        def do_search():
-            term = search_bar.text().strip()
-            if term:
-                current_term["text"] = term
-                web.findText(term, QWebEnginePage.FindFlag(0))
-
-        def do_next():
-            if current_term["text"]:
-                web.findText(current_term["text"], QWebEnginePage.FindFlag(0))
-
-        def do_prev():
-            if current_term["text"]:
-                web.findText(current_term["text"], QWebEnginePage.FindBackward)
-
-        # Wire up
-        search_btn.clicked.connect(do_search)
-        next_btn.clicked.connect(do_next)
-        prev_btn.clicked.connect(do_prev)
-
-        # --- Layouts ---
-        search_layout = QHBoxLayout()
-        search_layout.setContentsMargins(0, 0, 0, 0)
-        search_layout.setSpacing(8)
-        search_layout.addWidget(search_bar, 2)
-        search_layout.addWidget(search_btn, 1)
-        search_layout.addWidget(prev_btn)
-        search_layout.addWidget(next_btn)
-
-        layout = QVBoxLayout()
-        layout.addLayout(search_layout)
-        layout.addWidget(web)
-
-        popup.setLayout(layout)
-
-        popup.show()
-        return popup
+        setThemeColor(ACCENT_COLORS.get(self.settings.value("accent"), ACCENT_COLORS.get("Red")))
