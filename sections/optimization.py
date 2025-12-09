@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 
-from qfluentwidgets import SpinBox, DoubleSpinBox, ComboBox, PushButton, SubtitleLabel
+from qfluentwidgets import SpinBox, DoubleSpinBox, ComboBox, PushButton, SubtitleLabel, PrimaryPushButton
 
 from testing.inputfnc2 import InputFile
 from testing.optimize import Optimize as Opt
@@ -251,7 +251,7 @@ class OptimizationPage(QWidget):
         self._rebuild()
 
         # --- Buttons ---
-        self.start = PushButton("Start")
+        self.start = PrimaryPushButton("Start")
         self.stop  = PushButton("Stop")
         self.stop.setEnabled(False)
         self.stop.pressed.connect(lambda: self._stop_solve())

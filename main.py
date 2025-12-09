@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QFont, QFontDatabase
 from sections.app import App
 
 if __name__ == "__main__":

@@ -68,7 +68,7 @@ class InputFile:
         self.gradients: list[Function] = []
         self.__read_data()
 
-    def __expr__(self) -> str:
+    def __repr__(self) -> str:
         if self.error:
             return self.error_message
 

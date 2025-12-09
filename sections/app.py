@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage
 from qfluentwidgets import (
-    FluentWindow, setTheme, Theme, CommandBar, Action, FluentTitleBar, PushButton, FlyoutView,
+    FluentWindow, setTheme, setThemeColor, Theme, CommandBar, Action, FluentTitleBar, PushButton, FlyoutView,
     Dialog, LineEdit, PrimaryPushButton, ToolButton, NavigationItemPosition, FluentIcon as FI
 )
 
@@ -18,6 +18,7 @@ from sections.settingspage import SettingsPage
 from sections.mainpage import MainPage
 
 from testing.inputfnc2 import InputFile
+from stylesheet.accents import ACCENT_COLORS
 
 
 class App(FluentWindow):
@@ -31,9 +32,10 @@ class App(FluentWindow):
         # --- SETTINGS ---
         self.settings = QSettings("PyPROE", "PyPROE App")
         setTheme(Theme.DARK if self.settings.value("theme") == "Dark" else Theme.LIGHT)
+        setThemeColor(ACCENT_COLORS.get(self.settings.value("accent"), ACCENT_COLORS.get("Red")))
 
         # --- PAGES ---
-        self.frm = FormulationPage()
+        self.frm = FormulationPage(self)
         self.doe = DesignOfExperimentsPage()
         self.mmd = MetamodelPage()
         self.opt = OptimizationPage()
@@ -101,14 +103,8 @@ class App(FluentWindow):
             filename = dlg.selectedFiles()[0]
             self.settings.setValue('previous_open_file_dir', filename)
 
-            try:
-                with open(filename, "r") as f:
-                    data = f.read()
-
-                self.frm.layout.setText(data)
-
-            except Exception as e:
-                print("Failed to load file:", e)
+            if filename.endswith(".fnc"):
+                self.frm.load_from_file(file_path=filename)
     
     def _save_file(self):
         ...
