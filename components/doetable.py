@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QTableWidgetItem, QAbstractItemView, QApplication, QStyledItemDelegate
+from PySide6.QtWidgets import QTableWidgetItem, QAbstractItemView, QApplication, QWidget
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QKeySequence, QColor
 
@@ -17,6 +17,9 @@ class DOETable(TableWidget):
         self.setSelectionBehavior(QAbstractItemView.SelectItems)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         # self.verticalHeader().hide()
+        self.horizontalHeader().setStyleSheet("QHeaderView::section { border: none; }")
+        self.verticalHeader().setStyleSheet("QHeaderView::section { border: none; }")
+        self.setCornerButtonEnabled(False)
         
         self.selectionModel().selectionChanged.connect(self.on_selection_changed)
 
@@ -33,6 +36,14 @@ class DOETable(TableWidget):
                 self.setItem(i, j, item)
 
         if headers: self.setHorizontalHeaderLabels(headers)
+
+        self.fix_corner()
+
+    def fix_corner(self):
+        for child in self.findChildren(QWidget):
+            if child.metaObject().className() == "QTableCornerButton":
+                child.setStyleSheet("QTableCornerButton::section {border: none;}")
+                return
 
     def on_selection_changed(self):
         # Reset all cells

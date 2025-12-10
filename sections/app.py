@@ -73,11 +73,11 @@ class App(FluentWindow):
         self.addSubInterface(self.main_page, FI.HOME, "Main")
         self.navigationInterface.addSeparator()
         self.navigationInterface.addSeparator(position=NavigationItemPosition.BOTTOM)
-        self.navigationInterface.addItem(
+        view_documentation = NavigationPushButton(FI.QUESTION, "View Documentation", isSelectable=False)
+        view_documentation.clicked.connect(self.show_documentation)
+        self.navigationInterface.addWidget(
             routeKey="show-help",
-            icon=FI.QUESTION,
-            text="View Documentation",
-            onClick=self.show_documentation,
+            widget=view_documentation,
             position=NavigationItemPosition.BOTTOM,
         )
         self.addSubInterface(self.page_settings, FI.SETTING, "Settings", NavigationItemPosition.BOTTOM)
