@@ -56,7 +56,7 @@ def prepare_function(func_str: str):
     return regex.sub(pattern, replace_isum, func_str, flags=regex.IGNORECASE)
 
 def get_expr(func_str: str, vars: list, constants: dict = None):
-    x_vars = symbols(' '.join(vars), real=True)
+    x_vars = symbols(' '.join(vars), real=True, seq=True)
 
     # Build a locals dictionary that includes all valid variable names
     local_dict = {f'{vars[i]}': x_vars[i] for i in range(len(vars))}
@@ -74,7 +74,7 @@ def get_expr(func_str: str, vars: list, constants: dict = None):
         raise ValueError(f"Failed to parse function string: {e}.")
 
 class Variable:
-    def __init__(self, _symbol, _min: float, _max: float, _type, _increment: float=1e-6):
+    def __init__(self, _symbol, _min: float, _max: float, _type: str = "NA", _increment: float=1e-6):
         self.symbol = _symbol
         self.min, self.max = float(_min), float(_max)
         self.type      = _type
@@ -187,6 +187,8 @@ class Function:
     registry = {}
 
     def __init__(self, name: str, function: str[Function], variables: list[str], constants: dict=None):
+        if function.strip() == "": function = "0"
+
         self.name = name.lower()
         self.text = function.lower()
         self.constants = constants or {}
@@ -195,7 +197,7 @@ class Function:
 
         # Detect variable names using sympy
         self.expr = get_expr(function, [v.lower() for v in variables], constants=self.constants)
-        self.variables = sorted(symbols(' '.join([v.lower() for v in variables]), real=True), key=lambda s: str(s))
+        self.variables = sorted(symbols(' '.join([v.lower() for v in variables]), real=True, seq=True), key=lambda s: str(s))
 
         # Create fast evaluation function
         self.fast_func = get_fast_func(self.expr, self.variables)

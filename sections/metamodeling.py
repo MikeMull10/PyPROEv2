@@ -1,18 +1,19 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
 
 from components.clickabletitle import ClickableTitleLabel
 from sections.designofexperiments import make_row
 
-from qfluentwidgets import ComboBox
+from qfluentwidgets import ComboBox, TextEdit
 
 class MetamodelPage(QWidget):
-    def __init__(self):
+    def __init__(self, parent=None):
         super().__init__()
         self.setObjectName("Metamodel")
+        self.parent = None
         self.showing = True
 
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
@@ -32,21 +33,29 @@ class MetamodelPage(QWidget):
         self.method_type.currentIndexChanged.connect(self.update_function_options)
         self.method_type_row = make_row("Method:", self.method_type)
         options_section.addWidget(self.method_type_row)
-        options_section.addSpacing(10)
+        options_section.addSpacing(5)
 
         # --- Functions ---
         self.function_type = ComboBox()
         self.function_type_row = make_row("Function:", self.function_type)
         self.update_function_options()
         options_section.addWidget(self.function_type_row)
-        options_section.addSpacing(10)
+        options_section.addSpacing(5)
 
         # --- Polynomial Order ---
         self.poly_order = ComboBox()
         self.poly_order.addItems(["0", "1"])
         self.poly_order_row = make_row("Polynomial Order:", self.poly_order)
         options_section.addWidget(self.poly_order_row)
-        options_section.addSpacing(10)
+        options_section.addSpacing(5)
+
+        options_section.addStretch()
+
+        self.results = TextEdit()
+        layout.addWidget(self.results)
+
+        layout.setStretch(0, 1)
+        layout.setStretch(1, 1)
     
     def update_function_options(self):
         self.function_type.clear()
@@ -63,5 +72,8 @@ class MetamodelPage(QWidget):
 
         if self.showing:
             self.option_section_widget.show()
+            self.results.show()
         else:
             self.option_section_widget.hide()
+            self.results.hide()
+

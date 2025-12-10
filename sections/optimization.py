@@ -135,7 +135,9 @@ class OptimizationPage(QWidget):
 
     def _setup_layout(self):
         main = QHBoxLayout(self)
-        self.set_max_height()
+        main.setContentsMargins(0, 0, 0, 0)
+        main.setSpacing(0)
+        # self.set_max_height()
 
         opt_wrapper = QVBoxLayout()
         opt_wrapper.addWidget(self.section_title)
@@ -160,7 +162,7 @@ class OptimizationPage(QWidget):
         self.solver_type.addItems(["SciPy", "GimOPT"])
         self.solver_type_row = make_row("Solver:", self.solver_type)
         self.layout.addWidget(self.solver_type_row)
-        self.layout.addSpacing(10)
+        self.layout.addSpacing(5)
 
         # --- Solver Row ---
         self.solver = ComboBox()
@@ -168,7 +170,7 @@ class OptimizationPage(QWidget):
         self.solver.currentTextChanged.connect(self._rebuild)
         self.solver_row = make_row("Solver Type:", self.solver)
         self.layout.addWidget(self.solver_row)
-        self.layout.addSpacing(10)
+        self.layout.addSpacing(5)
 
         ### --- Solver Options ---
         # --- Grid Size Row ---
@@ -280,7 +282,6 @@ class OptimizationPage(QWidget):
         self.results = QVBoxLayout(self.results_widget)
 
         self.toggle = ToggleWidget()
-        self.toggle.setMaximumWidth(self.width() // 2)
         self.results.addWidget(self.toggle)
 
         main.addLayout(opt_wrapper)
@@ -342,15 +343,15 @@ class OptimizationPage(QWidget):
         self.start.setEnabled(True)
         self.stop .setEnabled(False)
 
-    def set_max_height(self):
-        app = QApplication.instance() or QApplication([])
+    # def set_max_height(self):
+    #     app = QApplication.instance() or QApplication([])
 
-        # Assuming self is your OptimizationPage QWidget
-        screen = app.primaryScreen()
-        screen_height = screen.size().height()
+    #     # Assuming self is your OptimizationPage QWidget
+    #     screen = app.primaryScreen()
+    #     screen_height = screen.size().height()
 
-        # Set maximum height to one third of the screen height
-        self.setMaximumHeight(screen_height // 3)
+    #     # Set maximum height to one third of the screen height
+    #     self.setMaximumHeight(screen_height // 3)
 
     def _check_process(self):
         if self.queue.empty():
@@ -388,10 +389,6 @@ class OptimizationPage(QWidget):
                 ...
 
         self.toggle.graph.draw()
-
-    def resizeEvent(self, event):
-        self.toggle.setMaximumWidth(self.width() // 2)
-        return super().resizeEvent(event)
 
     def toggle_collapse(self):
         self.showing ^= True

@@ -21,13 +21,11 @@ class EquationEditorDialog(MessageBoxBase):
     def __init__(self, initial_text: str = "", parent=None):
         super().__init__(parent)
 
-        # --- Main content container ---
         container = QWidget()
         layout = QVBoxLayout(container)
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(15)
 
-        # Text editor
         self.text_area = PlainTextEdit(self)
         self.text_area.setPlaceholderText("*equation here*")
         self.text_area.setPlainText(initial_text)

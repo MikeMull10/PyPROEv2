@@ -244,11 +244,11 @@ class FunctionsSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
-        self.function_name_update()
+        if self.function_name_update: self.function_name_update()
 
     def delete_item(self, item):
         super().delete_item(item)
-        self.function_name_update()
+        if self.function_name_update: self.function_name_update()
     
     def get_fnc(self):
         ret = f"*FUNCTION: {self.row_container.count()}\n\n"
