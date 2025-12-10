@@ -20,7 +20,7 @@ class FormSection(QWidget):
         self.top_bar = QHBoxLayout()
         self.title_raw = title
         self.title = TitleLabel(f"{self.title_raw}: 0")
-        self.title.setStyleSheet("TitleLabel {font-family: \"Courier New\", monospace}")
+        # self.title.setStyleSheet("TitleLabel {font-family: \"Courier New\", monospace}")
         self.add_btn = PrimaryToolButton(FI.ADD)
         self.add_btn.setCursor(Qt.PointingHandCursor)
         self.add_btn.clicked.connect(lambda: self.add_row())

@@ -13,7 +13,7 @@ from qfluentwidgets import (
 from sections.designofexperiments import DesignOfExperimentsPage
 from sections.optimization import OptimizationPage
 from sections.formulation import FormulationPage
-from sections.metamodelling import MetamodelPage
+from sections.metamodeling import MetamodelPage
 from sections.settingspage import SettingsPage, is_valid_hex_color
 from sections.mainpage import MainPage
 
@@ -22,12 +22,15 @@ from stylesheet.accents import ACCENT_COLORS
 
 from components.helppopup import DocumentationPopup
 
+import sys, ctypes
+
 
 class App(FluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("PyPROE X")
         self.setWindowIcon(QIcon("assets/pyproe-logo.png"))
+        if sys.platform == "win32": ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PyPROE X.v0")
         self.resize(1400, 900)
         self.showMaximized()
 
@@ -40,7 +43,7 @@ class App(FluentWindow):
         self.doe = DesignOfExperimentsPage()
         self.mmd = MetamodelPage()
         self.opt = OptimizationPage()
-        self.page_settings = SettingsPage()
+        self.page_settings = SettingsPage(self.trigger_theme_change)
         self.main_page = MainPage(formpage=self.frm, doepage=self.doe, metapage=self.mmd, optpage=self.opt)
 
         # Connect Optimization
@@ -153,3 +156,6 @@ class App(FluentWindow):
             return
 
         setThemeColor(ACCENT_COLORS.get(self.settings.value("accent"), ACCENT_COLORS.get("Red")))
+
+    def trigger_theme_change(self):
+        self.doe.table.on_selection_changed()

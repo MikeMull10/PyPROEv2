@@ -14,11 +14,12 @@ def is_valid_hex_color(s):
         return False
 
 class SettingsPage(QWidget):
-    def __init__(self):
+    def __init__(self, trigger_theme_change: callable=None):
         super().__init__()
         self.setObjectName("settings")  # required for addSubInterface
         self.settings = QSettings("PyPROE", "PyPROE App")
         self.init_setting_values()
+        self.trigger_theme_change: callable = trigger_theme_change
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -77,6 +78,7 @@ class SettingsPage(QWidget):
     def update_theme(self):
         self.settings.setValue("theme", self.theme_combo.currentText())
         setTheme(Theme.DARK if self.theme_combo.currentIndex() else Theme.LIGHT)
+        if self.trigger_theme_change: self.trigger_theme_change()
 
     def update_accent(self):
         if self.accent_combo.currentText() != "Custom":
@@ -100,3 +102,5 @@ class SettingsPage(QWidget):
                 print(e)
         else:
             setThemeColor(ACCENT_COLORS.get(self.settings.value("accent"), ACCENT_COLORS.get("Red")))
+
+        if self.trigger_theme_change: self.trigger_theme_change()

@@ -14,6 +14,8 @@ from testing.optimize import EvolutionType
 from testing.optimization_data import Opt as OptStatus
 from testing.optimization_data import Optimization as OptObj
 
+from components.clickabletitle import ClickableTitleLabel
+
 from sections.graph import ToggleWidget, MplWidget
 
 from multiprocessing import Process, Queue
@@ -125,6 +127,9 @@ class OptimizationPage(QWidget):
     def __init__(self):
         super().__init__()
         self.setObjectName("Optimization")
+        self.section_title = ClickableTitleLabel("Optimization")
+        self.section_title.clicked.connect(self.toggle_collapse)
+        self.showing = True
 
         self._setup_layout()
 
@@ -132,7 +137,11 @@ class OptimizationPage(QWidget):
         main = QHBoxLayout(self)
         self.set_max_height()
 
-        self.layout = QVBoxLayout()
+        opt_wrapper = QVBoxLayout()
+        opt_wrapper.addWidget(self.section_title)
+        self.options_section_widget = QWidget()
+        opt_wrapper.addWidget(self.options_section_widget)
+        self.layout = QVBoxLayout(self.options_section_widget)
 
         # --- Row helper function ---
         def make_row(label_text, widget):
@@ -267,15 +276,18 @@ class OptimizationPage(QWidget):
         self.layout.addStretch()  # push buttons to bottom
         self.layout.addLayout(self.btns_layout)
 
-        main.addLayout(self.layout)
-
-        results = QVBoxLayout()
+        self.results_widget = QWidget()
+        self.results = QVBoxLayout(self.results_widget)
 
         self.toggle = ToggleWidget()
         self.toggle.setMaximumWidth(self.width() // 2)
-        results.addWidget(self.toggle)
+        self.results.addWidget(self.toggle)
 
-        main.addLayout(results)
+        main.addLayout(opt_wrapper)
+        # main.addStretch()
+        main.addWidget(self.results_widget)
+        main.setStretch(0, 1)
+        main.setStretch(1, 1)
 
         ### --- Solving ---
         self.process: Process = None
@@ -380,4 +392,13 @@ class OptimizationPage(QWidget):
     def resizeEvent(self, event):
         self.toggle.setMaximumWidth(self.width() // 2)
         return super().resizeEvent(event)
-    
+
+    def toggle_collapse(self):
+        self.showing ^= True
+        
+        if self.showing:
+            self.options_section_widget.show()
+            self.results_widget.show()
+        else:
+            self.options_section_widget.hide()
+            self.results_widget.hide()
