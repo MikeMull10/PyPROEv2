@@ -43,10 +43,10 @@ class FormulationPage(QWidget):
         
         main_layout.addWidget(self.var_section)
         main_layout.addWidget(self.con_section)
+        main_layout.addWidget(self.fnc_section)
         main_layout.addWidget(self.obj_section)
         main_layout.addWidget(self.eqs_section)
         main_layout.addWidget(self.iqs_section)
-        main_layout.addWidget(self.fnc_section)
 
         main_layout.addStretch()
 
