@@ -13,7 +13,7 @@ from stylesheet.stylesheet import get_stylesheet
 from sections.designofexperiments import DesignOfExperimentsPage
 from sections.optimization import OptimizationPage
 from sections.formulation import FormulationPage
-from sections.metamodelling import MetamodelPage
+from sections.metamodeling import MetamodelPage
 
 from basics.settings import SettingsManager
 
