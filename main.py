@@ -4,7 +4,7 @@ from sections.app import App
 
 if __name__ == "__main__":
     app = QApplication([])
-    app.setWindowIcon(QIcon("assets/pyproe-logo.png"))
+    app.setWindowIcon(QIcon("assets/logo.png"))
     window = App()
     window.show()
     app.exec()

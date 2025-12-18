@@ -6,11 +6,13 @@ from PySide6.QtCore import Qt
 from qfluentwidgets import TextEdit, TitleLabel, SubtitleLabel, PushButton, PrimaryToolButton, ToolButton, FluentIcon as FI
 
 from components.formitems import DefaultItem, VariableItem, ConstantItem, ObjectiveItem, FunctionItem, EqualityItem, InequalityItem
+from components.clickabletitle import ClickableSubtitleLabelIcon
 
 class FormSection(QWidget):
-    def __init__(self, title: str = ""):
+    def __init__(self, title: str = "", clickable_title: bool=True):
         super().__init__()
         self.number_items = 0
+        self.showing = True
 
         # Main layout for the section
         self.main_layout = QVBoxLayout(self)
@@ -19,7 +21,12 @@ class FormSection(QWidget):
         # --- Top bar layout ---
         self.top_bar = QHBoxLayout()
         self.title_raw = title
-        self.title = TitleLabel(f"{self.title_raw}: 0")
+
+        if clickable_title:
+            self.title = ClickableSubtitleLabelIcon(f"{self.title_raw}: 0")
+            self.title.clicked.connect(self.toggle_view)
+        else:
+            self.title = TitleLabel(f"{self.title_raw}: 0")
         # self.title.setStyleSheet("TitleLabel {font-family: \"Courier New\", monospace}")
         self.add_btn = PrimaryToolButton(FI.ADD)
         self.add_btn.setCursor(Qt.PointingHandCursor)
@@ -36,11 +43,19 @@ class FormSection(QWidget):
         self.row_container = QVBoxLayout()
         self.row_container.setContentsMargins(0, 0, 0, 0)
         self.main_layout.addLayout(self.row_container)
+    
+    def toggle_view(self):
+        for i in range(self.row_container.count()):
+            if self.title.showing:
+                self.row_container.itemAt(i).widget().show()
+            else:
+                self.row_container.itemAt(i).widget().hide()
 
     def add_row(self, item: DefaultItem):
         item.remove_btn.clicked.connect(lambda _, w=item: self.delete_item(w))
         item.up_arrow.clicked.connect(lambda _, w=item: self.move(w, "UP"))
         item.down_arrow.clicked.connect(lambda _, w=item: self.move(w, "DOWN"))
+        if not self.showing: item.hide()
         self.update_count()
 
     def delete_item(self, item: DefaultItem):
@@ -49,7 +64,8 @@ class FormSection(QWidget):
         self.update_count()
     
     def update_count(self):
-        self.title.setText(f"{self.title_raw}: {self.row_container.count()}")
+        title = self.title.label if type(self.title) == ClickableSubtitleLabelIcon else self.title
+        title.setText(f"{self.title_raw}: {self.row_container.count()}")
     
     def swap_rows(self, i: int, j: int):
         layout = self.row_container
@@ -95,8 +111,8 @@ class FormSection(QWidget):
         raise NotImplementedError
 
 class VariablesSection(FormSection):
-    def __init__(self):
-        super().__init__("Variables")
+    def __init__(self, clickable_title: bool=True):
+        super().__init__("Variables", clickable_title=clickable_title)
     
     def add_row(self, var_min: float = 0.0, var_max: float = 1.0, var_name=None):
         if not var_name:
@@ -141,10 +157,11 @@ class ConstantsSection(FormSection):
         return ret
 
 class ObjectivesSection(FormSection):
-    def __init__(self):
+    def __init__(self, function_name_update: callable=None):
         super().__init__("Objectives")
+        self.function_name_update = function_name_update
     
-    def add_row(self, name: str = None, value: str = ""):
+    def add_row(self, name: str=None, value: str=""):
         if not name:
             name = f"O{self.row_container.count() + 1}"
 
@@ -152,6 +169,11 @@ class ObjectivesSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+        if self.function_name_update: self.function_name_update()
+    
+    def delete_item(self, item):
+        super().delete_item(item)
+        if self.function_name_update: self.function_name_update()
 
     def get_fnc(self):
         ret = f"*OBJECTIVE: {self.row_container.count()}\n\n"
@@ -164,9 +186,10 @@ class ObjectivesSection(FormSection):
         return ret
 
 class EqualitiesSection(FormSection):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, function_name_update: callable=None):
         super().__init__("Equality-Constraints")
         self.parent = parent
+        self.function_name_update = function_name_update
 
     def add_row(self, name: str = None, value: str = "", eq_value: float = 0.0):
         if not name:
@@ -176,6 +199,11 @@ class EqualitiesSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+        if self.function_name_update: self.function_name_update()
+    
+    def delete_item(self, item):
+        super().delete_item(item)
+        if self.function_name_update: self.function_name_update()
     
     def get_fnc(self):
         ret = f"*EQUALITY-CONSTRAINT: {self.row_container.count()}\n\n"
@@ -196,9 +224,10 @@ class EqualitiesSection(FormSection):
         return ret
 
 class InequalitiesSection(FormSection):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, function_name_update: callable=None):
         super().__init__("Inequality-Constraints")
         self.parent = parent
+        self.function_name_update = function_name_update
 
     def add_row(self, name: str = None, value: str = "", eq_value: float = 0.0):
         if not name:
@@ -208,6 +237,11 @@ class InequalitiesSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+        if self.function_name_update: self.function_name_update()
+    
+    def delete_item(self, item):
+        super().delete_item(item)
+        if self.function_name_update: self.function_name_update()
     
     def get_fnc(self):
         ret = f"*INEQUALITY-CONSTRAINT: {self.row_container.count()}\n\n"
@@ -231,8 +265,8 @@ class InequalitiesSection(FormSection):
         return ret
 
 class FunctionsSection(FormSection):
-    def __init__(self, parent=None, function_name_update: callable=None):
-        super().__init__("Functions")
+    def __init__(self, parent=None, function_name_update: callable=None, clickable_title: bool=True):
+        super().__init__("Functions", clickable_title=clickable_title)
         self.parent = parent
         self.function_name_update = function_name_update
 

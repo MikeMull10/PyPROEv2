@@ -6,8 +6,8 @@ from PySide6.QtCore import Qt, QSettings
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEnginePage
 from qfluentwidgets import (
-    FluentWindow, setTheme, setThemeColor, Theme, CommandBar, Action, FluentTitleBar, PushButton, FlyoutView,
-    NavigationPushButton, LineEdit, PrimaryPushButton, ToolButton, NavigationItemPosition, FluentIcon as FI
+    FluentWindow, setTheme, setThemeColor, Theme, theme,
+    NavigationPushButton, NavigationItemPosition, FluentIcon as FI
 )
 
 from sections.designofexperiments import DesignOfExperimentsPage
@@ -29,7 +29,7 @@ class App(FluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("PyPROE X")
-        self.setWindowIcon(QIcon("assets/pyproe-logo.png"))
+        self.setWindowIcon(QIcon("assets/logo.png"))
         if sys.platform == "win32": ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PyPROE X.v0")
         self.resize(1400, 900)
         self.showMaximized()
@@ -42,7 +42,7 @@ class App(FluentWindow):
         self.frm = FormulationPage(self)
         self.doe = DesignOfExperimentsPage(self)
         self.mmd = MetamodelPage()
-        self.opt = OptimizationPage()
+        self.opt = OptimizationPage(self.frm)
         self.page_settings = SettingsPage(self.trigger_theme_change)
         self.main_page = MainPage(formpage=self.frm, doepage=self.doe, metapage=self.mmd, optpage=self.opt)
 
@@ -102,7 +102,7 @@ class App(FluentWindow):
         dlg = QFileDialog(self,
                           "Open File",
                           self.settings.value("previous_open_file_dir"),
-                          "Optimization function files (*.fnc)")
+                          "Supported files (*.doe *.fnc);;Optimization function files (*.fnc);;Design of experiment files (*.doe)")
 
         dlg.setFileMode(QFileDialog.ExistingFile)
         dlg.setAcceptMode(QFileDialog.AcceptOpen)
@@ -113,6 +113,9 @@ class App(FluentWindow):
 
             if filename.endswith(".fnc"):
                 self.frm.load_from_file(file_path=filename)
+            
+            elif filename.endswith(".doe"):
+                self.doe.load_from_file(file_path=filename)
     
     def _save_file(self):
         saveFile = QFileDialog(
@@ -159,3 +162,5 @@ class App(FluentWindow):
 
     def trigger_theme_change(self):
         self.doe.table.on_selection_changed()
+        self.frm.divider.style = theme()
+        self.frm.divider.update_style()

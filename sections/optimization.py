@@ -124,12 +124,13 @@ class NoTrailingZerosSpinBox(DoubleSpinBox):
         return ('{0:.10f}'.format(value)).rstrip('0').rstrip('.') 
 
 class OptimizationPage(QWidget):
-    def __init__(self):
+    def __init__(self, formpage=None):
         super().__init__()
         self.setObjectName("Optimization")
         self.section_title = ClickableTitleLabel("Optimization")
         self.section_title.clicked.connect(self.toggle_collapse)
         self.showing = True
+        self.formpage = formpage
 
         self._setup_layout()
 
@@ -137,7 +138,6 @@ class OptimizationPage(QWidget):
         main = QHBoxLayout(self)
         main.setContentsMargins(0, 0, 0, 0)
         main.setSpacing(0)
-        # self.set_max_height()
 
         opt_wrapper = QVBoxLayout()
         opt_wrapper.addWidget(self.section_title)
@@ -162,7 +162,6 @@ class OptimizationPage(QWidget):
         self.solver_type.addItems(["SciPy", "GimOPT"])
         self.solver_type_row = make_row("Solver:", self.solver_type)
         self.layout.addWidget(self.solver_type_row)
-        self.layout.addSpacing(5)
 
         # --- Solver Row ---
         self.solver = ComboBox()
@@ -170,7 +169,6 @@ class OptimizationPage(QWidget):
         self.solver.currentTextChanged.connect(self._rebuild)
         self.solver_row = make_row("Solver Type:", self.solver)
         self.layout.addWidget(self.solver_row)
-        self.layout.addSpacing(5)
 
         ### --- Solver Options ---
         # --- Grid Size Row ---
@@ -285,10 +283,11 @@ class OptimizationPage(QWidget):
         self.results.addWidget(self.toggle)
 
         main.addLayout(opt_wrapper)
-        # main.addStretch()
-        main.addWidget(self.results_widget)
-        main.setStretch(0, 1)
-        main.setStretch(1, 1)
+        self.layout.addWidget(self.results_widget)
+        if self.formpage:
+            main.addWidget(self.formpage)
+            main.setStretch(0, 1)
+            main.setStretch(1, 1)
 
         ### --- Solving ---
         self.process: Process = None
@@ -343,16 +342,6 @@ class OptimizationPage(QWidget):
         self.start.setEnabled(True)
         self.stop .setEnabled(False)
 
-    # def set_max_height(self):
-    #     app = QApplication.instance() or QApplication([])
-
-    #     # Assuming self is your OptimizationPage QWidget
-    #     screen = app.primaryScreen()
-    #     screen_height = screen.size().height()
-
-    #     # Set maximum height to one third of the screen height
-    #     self.setMaximumHeight(screen_height // 3)
-
     def _check_process(self):
         if self.queue.empty():
             if not self.process.is_alive():
@@ -395,7 +384,7 @@ class OptimizationPage(QWidget):
         
         if self.showing:
             self.options_section_widget.show()
-            self.results_widget.show()
+            self.formpage.show()
         else:
             self.options_section_widget.hide()
-            self.results_widget.hide()
+            self.formpage.hide()

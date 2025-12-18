@@ -1,33 +1,65 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
+
+from components.clickabletitle import ClickableTitleLabel
+from sections.designofexperiments import DesignOfExperimentsPage
+from sections.metamodeling import MetamodelPage
 
 from qfluentwidgets import ScrollArea, FluentStyleSheet, Theme, TitleLabel
 
 
 class MainPage(QWidget):
-    def __init__(self, formpage=None, doepage=None, metapage=None, optpage=None):
+    def __init__(self, formpage=None, doepage: DesignOfExperimentsPage=None, metapage: MetamodelPage=None, optpage=None):
         super().__init__()
-
         self.setObjectName("Main")
+        self.main = QVBoxLayout(self)
 
-        main = QHBoxLayout(self)
+        self.formpage = formpage
+        self.doepage: DesignOfExperimentsPage = doepage
+        self.doepage.toggle_call = lambda: self.handle_collapse(page_name="doe")
+        self.metapage: MetamodelPage = metapage
+        self.metapage.toggle_call = lambda: self.handle_collapse(page_name="mmd")
+        self.optpage = optpage
 
-        left = QVBoxLayout()
-        left.addWidget(formpage)
+        self.doe_title = ClickableTitleLabel("Design of Experiments")
+        self.doe_title.setVisible(False)
+        self.doe_title.clicked.connect(self.doepage.toggle_collapse)
+        self.meta_title = ClickableTitleLabel("Metamodeling")
+        self.meta_title.setVisible(False)
+        self.meta_title.clicked.connect(self.metapage.toggle_collapse)
+        self.opt_title = ClickableTitleLabel("Optimization")
+        self.opt_title.setVisible(False)
+    
 
-        right = QVBoxLayout()
-        if doepage:
-            right.addWidget(doepage)
-        if metapage:
-            right.addWidget(metapage)
-        if optpage:
-            right.addWidget(optpage)
+        self.top = QHBoxLayout()
+        self.bottom = QHBoxLayout()
+
+        self.layout_a = QHBoxLayout()
+        self.layout_b = QHBoxLayout()
+
+        self.layout_a.addWidget(self.doe_title)
+        self.layout_a.addWidget(self.doepage)
+        self.layout_b.addWidget(self.meta_title)
+        self.layout_b.addWidget(self.metapage)
+
+        self.top.addLayout(self.layout_a)
+        self.top.addLayout(self.layout_b)
+
+        self.bottom.addWidget(self.optpage)
+        # self.bottom.addWidget(self.formpage)
         
-        left.setContentsMargins(0, 0, 0, 0)
-        right.setContentsMargins(0, 0, 0, 0)
-        left.setSpacing(0)
-        right.setSpacing(0)
+        self.top.setContentsMargins(0, 0, 0, 0)
+        self.bottom.setContentsMargins(0, 0, 0, 0)
+        self.top.setSpacing(0)
+        self.bottom.setSpacing(0)
 
-        main.addLayout(left)
-        main.addLayout(right)
+        self.main.addLayout(self.top)
+        self.main.addLayout(self.bottom)
+    
+    def handle_collapse(self, page_name: str):
+        match page_name:
+            case "doe":
+                self.doe_title.setVisible(not self.doepage.showing)
+            case "mmd":
+                self.meta_title.setVisible(not self.metapage.showing)

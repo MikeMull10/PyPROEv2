@@ -12,6 +12,7 @@ class MetamodelPage(QWidget):
         self.setObjectName("Metamodel")
         self.parent = None
         self.showing = True
+        self.toggle_call: callable = None
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -54,8 +55,8 @@ class MetamodelPage(QWidget):
         self.results = TextEdit()
         layout.addWidget(self.results)
 
-        layout.setStretch(0, 1)
-        layout.setStretch(1, 1)
+        layout.setStretch(0, 2)
+        layout.setStretch(1, 3)
     
     def update_function_options(self):
         self.function_type.clear()
@@ -69,11 +70,5 @@ class MetamodelPage(QWidget):
 
     def toggle_collapse(self):
         self.showing ^= True
-
-        if self.showing:
-            self.option_section_widget.show()
-            self.results.show()
-        else:
-            self.option_section_widget.hide()
-            self.results.hide()
-
+        self.setVisible(self.showing)
+        if self.toggle_call: self.toggle_call()

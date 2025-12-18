@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import QHBoxLayout, QWidget
 from PySide6.QtCore import Qt, QSize
 
-from qfluentwidgets import MessageBoxBase, PushButton, PlainTextEdit
 from components.formsections import VariablesSection, FunctionsSection, VariableItem, FunctionItem
 from testing.fnc_objects import Variable, Function
+
+from qfluentwidgets import MessageBoxBase, TitleLabel
 
 
 class DesignPopup(MessageBoxBase):
@@ -20,17 +21,15 @@ class DesignPopup(MessageBoxBase):
         layout.setSpacing(15)
 
         # --- Variables ---
-        self.variable_section = VariablesSection()
+        self.variable_section = VariablesSection(clickable_title=False)
         [self.variable_section.add_row() for i in range(variable_count)]
         layout.addWidget(self.variable_section)
 
         # --- Functions ---
-        self.function_section = FunctionsSection(parent)
+        self.function_section = FunctionsSection(parent, clickable_title=False)
+        self.function_section.title = TitleLabel("Functions: 0")
         [self.function_section.add_row() for i in range(function_count)]
         layout.addWidget(self.function_section)
-
-        # self.text_area = PlainTextEdit(self)
-        # self.text_area.setPlaceholderText("*equation here*")
 
         # Get base size of the Application window and scale down a bit
         base_size: QSize = parent.size()
@@ -45,10 +44,6 @@ class DesignPopup(MessageBoxBase):
 
         # Add main body to dialog
         self.viewLayout.addWidget(container)
-
-    def get_equation_text(self):
-        return
-        return self.text_area.toPlainText()
     
     def exec(self):
         ok = super().exec()

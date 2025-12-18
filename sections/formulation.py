@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit
+    QWidget, QVBoxLayout, QFrame
 )
 from PySide6.QtCore import Qt
-from qfluentwidgets import ScrollArea, SmoothScrollArea, CardWidget, TextEdit, TitleLabel, SubtitleLabel, PushButton, ToolButton, EditableComboBox, FluentIcon as FI
+from qfluentwidgets import theme, SmoothScrollArea, FluentIcon as FI
 
 from components.formsections import VariablesSection, ConstantsSection, ObjectivesSection, FunctionsSection, EqualitiesSection, InequalitiesSection, FunctionItem, ObjectiveItem, InequalityItem, EqualityItem
 from components.function_parse import parse_function_offset
+from components.divider import Divider
 from testing.inputfnc2 import InputFile
 import os
 
@@ -15,7 +16,7 @@ class FormulationPage(QWidget):
         self.function_names = set()
 
         self.setObjectName("Formulation")
-        self.setFixedWidth(550)
+        # self.setFixedWidth(550)
 
         main = QVBoxLayout(self)
         main.setContentsMargins(4, 4, 4, 4)
@@ -36,14 +37,16 @@ class FormulationPage(QWidget):
 
         self.var_section = VariablesSection()
         self.con_section = ConstantsSection()
-        self.obj_section = ObjectivesSection()
-        self.eqs_section = EqualitiesSection()
-        self.iqs_section = InequalitiesSection()
-        self.fnc_section = FunctionsSection(parent, self.update_function_names)
-        
+        self.obj_section = ObjectivesSection(function_name_update=self.update_function_names)
+        self.eqs_section = EqualitiesSection(function_name_update=self.update_function_names)
+        self.iqs_section = InequalitiesSection(function_name_update=self.update_function_names)
+        self.fnc_section = FunctionsSection(parent, function_name_update=self.update_function_names)
+        self.divider = Divider(style=theme())
+
         main_layout.addWidget(self.var_section)
         main_layout.addWidget(self.con_section)
         main_layout.addWidget(self.fnc_section)
+        main_layout.addWidget(self.divider)
         main_layout.addWidget(self.obj_section)
         main_layout.addWidget(self.eqs_section)
         main_layout.addWidget(self.iqs_section)
