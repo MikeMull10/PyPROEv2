@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from components.clickabletitle import ClickableTitleLabel
 from sections.designofexperiments import make_row
 
-from qfluentwidgets import ComboBox, TextEdit
+from qfluentwidgets import ComboBox, TextEdit, PrimaryPushButton
 
 class MetamodelPage(QWidget):
     def __init__(self, parent=None):
@@ -49,6 +49,10 @@ class MetamodelPage(QWidget):
         self.poly_order_row = make_row("Polynomial Order:", self.poly_order)
         options_section.addWidget(self.poly_order_row)
         options_section.addSpacing(5)
+
+        self.calculate_btn = PrimaryPushButton("Calculate")
+        self.calculate_btn.setCursor(Qt.PointingHandCursor)
+        options_section.addWidget(self.calculate_btn)
 
         options_section.addStretch()
 

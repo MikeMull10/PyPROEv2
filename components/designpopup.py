@@ -8,7 +8,7 @@ from qfluentwidgets import MessageBoxBase, TitleLabel
 
 
 class DesignPopup(MessageBoxBase):
-    def __init__(self, variable_count: int=0, function_count: int=0, parent=None):
+    def __init__(self, variable_count: int=0, function_count: int=0, parent=None, variables: list[Variable]=None, functions: list[Function]=None):
         """
         parent needs to be the main window
         """
@@ -22,13 +22,19 @@ class DesignPopup(MessageBoxBase):
 
         # --- Variables ---
         self.variable_section = VariablesSection(clickable_title=False)
-        [self.variable_section.add_row() for i in range(variable_count)]
+        if variables:
+            [self.variable_section.add_row(v.min, v.max, v.symbol) for v in variables]
+        else:
+            [self.variable_section.add_row() for i in range(variable_count)]
         layout.addWidget(self.variable_section)
 
         # --- Functions ---
         self.function_section = FunctionsSection(parent, clickable_title=False)
         self.function_section.title = TitleLabel("Functions: 0")
-        [self.function_section.add_row() for i in range(function_count)]
+        if functions:
+            [self.function_section.add_row(f.name, f.text) for f in functions]
+        else:
+            [self.function_section.add_row() for i in range(function_count)]
         layout.addWidget(self.function_section)
 
         # Get base size of the Application window and scale down a bit

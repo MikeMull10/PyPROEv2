@@ -34,6 +34,8 @@ class App(FluentWindow):
         self.resize(1400, 900)
         self.showMaximized()
 
+        self.version = "0.0.0"
+
         # --- SETTINGS ---
         self.settings = QSettings("PyPROE", "PyPROE App")
         self.set_app_theme()
@@ -90,7 +92,6 @@ class App(FluentWindow):
 
     # Functional Logic
     def _close_application(self):
-        # Close threaded optimization process if running
         p = self.opt.process
         if p and p.is_alive():
             p.terminate()

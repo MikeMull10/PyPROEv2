@@ -5,6 +5,8 @@ from components.doetable import DOETable
 from components.clickabletitle import ClickableTitleLabel
 from components.designpopup import DesignPopup
 from components.ccd import central_composite, scale_to_bounds
+from components.taguchi import get_oa
+from components.hypercube import lhs
 from testing.fnc_objects import Function, Variable
 
 from qfluentwidgets import SubtitleLabel, ComboBox, SpinBox, PushButton, PrimaryPushButton
@@ -12,14 +14,18 @@ import numpy as np
 import itertools
 
 from enum import Enum
-from pprint import pprint as pp
+
+class Flag(Enum):
+    TABLE = 0
+    VARIABLE = 1
+    FUNCTION = 2
 
 class MethodType(Enum):
     FACTORIAL = 0
     CENTRAL_COMPOSITE_SPHERICAL = 1
     CENTRAL_COMPOSITE_FACE = 2
     TAGUCHI = 3
-    LATIN = 4
+    LATIN_HYPERCUBE = 4
 
 # --- Row helper function ---
 def make_row(label_text, widget):
@@ -51,6 +57,7 @@ class DesignOfExperimentsPage(QWidget):
         doe_wrapper.addWidget(self.section_title)
         self.option_section_widget = QWidget()
         options_section = QVBoxLayout(self.option_section_widget)
+        options_section.setSpacing(10)
         doe_wrapper.addWidget(self.option_section_widget)
         layout.addLayout(doe_wrapper)
 
@@ -60,7 +67,6 @@ class DesignOfExperimentsPage(QWidget):
         self.method_type_row = make_row("Method:", self.method_type)
         self.method_type.currentIndexChanged.connect(self.adjust_setting_visibility)
         options_section.addWidget(self.method_type_row)
-        options_section.addSpacing(5)
 
         # --- Number of Variables ---
         self.variable_num = SpinBox()
@@ -68,7 +74,6 @@ class DesignOfExperimentsPage(QWidget):
         self.variable_num.setRange(1, 100)
         self.variable_num_row = make_row("Variable Count:", self.variable_num)
         options_section.addWidget(self.variable_num_row)
-        options_section.addSpacing(5)
 
         # --- Number of Functions ---
         self.functions_num = SpinBox()
@@ -76,7 +81,6 @@ class DesignOfExperimentsPage(QWidget):
         self.functions_num.setRange(1, 50)
         self.functions_num_row = make_row("Function Count:", self.functions_num)
         options_section.addWidget(self.functions_num_row)
-        options_section.addSpacing(5)
 
         # --- Number of Levels ---
         self.level_num = SpinBox()
@@ -84,16 +88,13 @@ class DesignOfExperimentsPage(QWidget):
         self.level_num.setRange(2, 20)
         self.level_num_row = make_row("Level Count:", self.level_num)
         options_section.addWidget(self.level_num_row)
-        options_section.addSpacing(5)
 
         # --- Data Points ---
         self.data_points = SpinBox()
         self.data_points.setValue(1)
-        self.data_points.setRange(1, 100)
-        self.data_points.setDisabled(True)
+        self.data_points.setRange(1, 1e6)
         self.data_points_row = make_row("Data Points:", self.data_points)
         options_section.addWidget(self.data_points_row)
-        options_section.addSpacing(5)
 
         # --- Center Points ---
         self.center_points = SpinBox()
@@ -102,14 +103,20 @@ class DesignOfExperimentsPage(QWidget):
         self.center_points_row = make_row("Center Points:", self.center_points)
         self.center_points_row.setToolTip("Number of repeated runs at the center of the design space.\n\nCenter points are used to estimate experimental error and detect curvature in the response. Increasing this value improves model reliability but increases the total number of runs.")
         options_section.addWidget(self.center_points_row)
-        options_section.addSpacing(5)
+
+        # --- Levels (Taguchi) ---
+        self.levels_taguchi = ComboBox()
+        self.levels_taguchi.addItems(['2', '3', '4', '5'])
+        self.levels_taguchi_row = make_row("Levels:", self.levels_taguchi)
+        self.levels_taguchi_row.setToolTip("Number of Levels for the Taguchi Orthognal Array")
+        options_section.addWidget(self.levels_taguchi_row)
 
         # --- Buttons ---
-        self.create_design = PushButton("Get Design")
+        self.create_design = PrimaryPushButton("Get Design")
         self.edit_design = PushButton("Edit Design")
         self.clear_btn = PushButton("Clear")
-        self.metamodel_btn = PrimaryPushButton("Metamodel")
-        [btn.setCursor(Qt.PointingHandCursor) for btn in [self.create_design, self.edit_design, self.clear_btn, self.metamodel_btn]]
+        self.add_point_btn = PushButton("Add Point")
+        [btn.setCursor(Qt.PointingHandCursor) for btn in [self.create_design, self.edit_design, self.clear_btn, self.add_point_btn]]
 
         # --- Add Buttons to Layout ---
         design_layout = QHBoxLayout()
@@ -117,7 +124,7 @@ class DesignOfExperimentsPage(QWidget):
         design_layout.addWidget(self.edit_design)
         second_layout = QHBoxLayout()
         second_layout.addWidget(self.clear_btn)
-        second_layout.addWidget(self.metamodel_btn)
+        second_layout.addWidget(self.add_point_btn)
         
         options_section.addLayout(design_layout)
         options_section.addLayout(second_layout)
@@ -132,7 +139,9 @@ class DesignOfExperimentsPage(QWidget):
 
         # --- Button Functionality ---
         self.create_design.clicked.connect(self.get_design_popup)
+        self.edit_design.clicked.connect(self.edit_design_popup)
         self.clear_btn.clicked.connect(self.table.clear)
+        self.add_point_btn.clicked.connect(self.table.add_point)
 
         # --- Set Initial Setting Visibility ---
         self.adjust_setting_visibility()
@@ -143,10 +152,22 @@ class DesignOfExperimentsPage(QWidget):
                 self.level_num_row.show()
                 self.data_points_row.hide()
                 self.center_points_row.hide()
+                self.levels_taguchi_row.hide()
             case MethodType.CENTRAL_COMPOSITE_SPHERICAL | MethodType.CENTRAL_COMPOSITE_FACE:
                 self.level_num_row.hide()
                 self.data_points_row.hide()
                 self.center_points_row.show()
+                self.levels_taguchi_row.hide()
+            case MethodType.TAGUCHI:
+                self.level_num_row.hide()
+                self.data_points_row.hide()
+                self.center_points_row.hide()
+                self.levels_taguchi_row.show()
+            case MethodType.LATIN_HYPERCUBE:
+                self.level_num_row.hide()
+                self.data_points_row.show()
+                self.center_points_row.hide()
+                self.levels_taguchi_row.hide()
     
     def toggle_collapse(self):
         self.showing ^= True
@@ -164,28 +185,55 @@ class DesignOfExperimentsPage(QWidget):
         if ok:
             self.populate_data(vars, funcs)
     
+    def edit_design_popup(self):
+        popup = DesignPopup(
+            self.variable_num.value(),
+            self.functions_num.value(),
+            self.parent,
+            variables=self.table.variables,
+            functions=self.table.functions,
+        )
+        ok, vars, funcs = popup.exec()
+        
+        if ok:
+            self.populate_data(vars, funcs)
+    
     def populate_data(self, variables: list[Variable], functions: list[Function]):
+        self.table.clear()
         variable_pool = []
+        points = []
         levels = self.level_num.value()
 
         match MethodType(self.method_type.currentIndex()):
             case MethodType.FACTORIAL:
                 for variable in variables:
                     variable_pool.append(np.linspace(variable.min, variable.max, levels))
+
+                for point in itertools.product(*variable_pool):
+                    points.append([*point])
+
             case MethodType.CENTRAL_COMPOSITE_SPHERICAL | MethodType.CENTRAL_COMPOSITE_FACE:
-                points = central_composite(len(variables), "face" if MethodType(self.method_type.currentIndex()) == MethodType.CENTRAL_COMPOSITE_FACE else "spherical", self.center_points.value())
+                ccd_points = central_composite(len(variables), "face" if MethodType(self.method_type.currentIndex()) == MethodType.CENTRAL_COMPOSITE_FACE else "spherical", self.center_points.value())
 
-                for var in scale_to_bounds(points, [v.min for v in variables], [v.max for v in variables]):
-                    variable_pool.append(var)
+                points = scale_to_bounds(ccd_points, [v.min for v in variables], [v.max for v in variables])
+            
+            case MethodType.TAGUCHI:
+                toa_points = get_oa(len(variables), int(self.levels_taguchi.currentText()))
 
-        pp(variable_pool)
-        if len(variable_pool) == 0:
-            return
+                points = scale_to_bounds(toa_points, [v.min for v in variables], [v.max for v in variables])
+
+            case MethodType.LATIN_HYPERCUBE:
+                points = lhs(variables, self.data_points.value())
+
+            case _:
+                raise ValueError(f"MethodType not found for {self.method_type.currentText()}.")
+                
+        if len(points) == 0:
+            raise ValueError(f"No valid points using method {MethodType(self.method_type.currentIndex())}.")
 
         data = []
-        for point in itertools.product(*variable_pool):
+        for point in points:
             data_point = [*point]
-            print(data_point)
             for fun in functions:
                 data_point.append(fun(point))
             
@@ -193,6 +241,8 @@ class DesignOfExperimentsPage(QWidget):
         
         headers = [var.symbol.upper() for var in variables] + [fun.name.upper() for fun in functions]
         self.table.populate([[str(d) for d in da] for da in data], headers=headers)
+        self.table.variables = variables
+        self.table.functions = functions
     
     def load_from_file(self, file_path: str):
         lines = []
@@ -205,7 +255,42 @@ class DesignOfExperimentsPage(QWidget):
         data = []
         headers = []
         if lines[0].startswith("!"):  # PyPROE X
-            version = lines[0].split('v')[ 1 ]
+            version = lines.pop(0).split('v')[ 1 ]
+
+            headers = None
+            data    = []
+            vars : list[Variable] = []
+            funcs: list[Function] = []
+            if version == "0.0.0":
+                flag: Flag = None
+                for line in lines:
+                    if "*TABLE" in line.upper():
+                        flag = Flag.TABLE
+                        continue
+                    elif "*VARIABLE" in line.upper():
+                        flag = Flag.VARIABLE
+                        continue
+                    elif "*FUNCTION" in line.upper():
+                        flag = Flag.FUNCTION
+                        continue
+                
+                    if flag == Flag.TABLE:
+                        if not headers:
+                            headers = line.split(';')
+                            continue
+                        data.append(line.split(';')[1:])
+                    elif flag == Flag.VARIABLE:
+                        sym, vals = line.split(':')
+                        _min, _max = map(float, vals.split(',')[0:2])
+                        vars.append(Variable(sym, _min, _max))
+                    elif flag == Flag.FUNCTION:
+                        sym, val = line.replace(';', '').split('=')
+                        funcs.append(Function(sym, val, [var.symbol for var in vars]))
+            
+                self.table.populate([[str(d) for d in da] for da in data], headers=headers)
+                self.table.variables = vars
+                self.table.functions = funcs
+
         else:                         # Legacy
             num_points, num_vars, num_levels, num_funcs = map(int, lines.pop(0).split())
 
@@ -216,7 +301,8 @@ class DesignOfExperimentsPage(QWidget):
                 headers.append(f"X{i + 1}")
             for i in range(num_funcs):
                 headers.append(f"F{i + 1}")
-
-            #TODO: get/create variable and function objects
         
-        self.table.populate(data=[[str(d) for d in da] for da in data], headers=headers)
+            self.table.populate(data=[[str(d) for d in da] for da in data], headers=headers)
+    
+    def save_to_file(self):
+        return f"!PyPROE X v{self.parent.version}\n" + self.table.get_save_data()

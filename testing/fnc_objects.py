@@ -81,7 +81,8 @@ class Variable:
         self.increment = float(_increment)
     
     def __repr__(self):
-        return f"{self.symbol}: ({self.min}, {self.max}), {self.type}, {self.increment}"
+        return f"{self.symbol}: {self.min}, {self.max}"
+        # return f"{self.symbol}: ({self.min}, {self.max}), {self.type}, {self.increment}"
 
 class Constant:
     def __init__(self, _symbol: str, _value_expr):
@@ -230,4 +231,4 @@ class Function:
         return np.array([f(vals) for f in self.gradient_funcs], dtype=float)
 
     def __repr__(self):
-        return f"{self.name} = {self.text}"
+        return f"{self.name.upper()} = {self.text.upper()}"

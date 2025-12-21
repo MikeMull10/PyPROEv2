@@ -85,4 +85,4 @@ def central_composite(
 def scale_to_bounds(points, mins, maxs):
     mins = np.asarray(mins)
     maxs = np.asarray(maxs)
-    return mins + (points + 1) * (maxs - mins) / 2
+    return mins + (np.array(points) + 1) * (maxs - mins) / 2
