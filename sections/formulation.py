@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from qfluentwidgets import theme, SmoothScrollArea, FluentIcon as FI
 
-from components.formsections import VariablesSection, ConstantsSection, ObjectivesSection, FunctionsSection, EqualitiesSection, InequalitiesSection, FunctionItem, ObjectiveItem, InequalityItem, EqualityItem
+from components.formsections import FormSection, VariablesSection, ConstantsSection, ObjectivesSection, FunctionsSection, EqualitiesSection, InequalitiesSection, FunctionItem, ObjectiveItem, InequalityItem, EqualityItem
 from components.function_parse import parse_function_offset
 from components.divider import Divider
 from testing.inputfnc2 import InputFile
@@ -16,7 +16,6 @@ class FormulationPage(QWidget):
         self.function_names = set()
 
         self.setObjectName("Formulation")
-        # self.setFixedWidth(550)
 
         main = QVBoxLayout(self)
         main.setContentsMargins(4, 4, 4, 4)
@@ -72,6 +71,7 @@ class FormulationPage(QWidget):
             self.function_names.add(item.name)
         
         ### Objectives, Equality Constraints, and Inequality Constraints
+        section_type: FormSection
         for section_type in [self.obj_section, self.eqs_section, self.iqs_section]:
             for i in range(section_type.row_container.count()):
                 self.update_options(section_type.row_container.itemAt(i).widget())            
