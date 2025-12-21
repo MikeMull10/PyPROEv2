@@ -141,6 +141,7 @@ class OptimizationPage(QWidget):
 
         opt_wrapper = QVBoxLayout()
         opt_wrapper.addWidget(self.section_title)
+        opt_wrapper.setAlignment(Qt.AlignTop)
         self.options_section_widget = QWidget()
         opt_wrapper.addWidget(self.options_section_widget)
         self.layout = QVBoxLayout(self.options_section_widget)

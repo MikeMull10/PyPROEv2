@@ -5,12 +5,13 @@ from PySide6.QtGui import QIcon
 from components.clickabletitle import ClickableTitleLabel
 from sections.designofexperiments import DesignOfExperimentsPage
 from sections.metamodeling import MetamodelPage
+from sections.optimization import OptimizationPage
 
 from qfluentwidgets import ScrollArea, FluentStyleSheet, Theme, TitleLabel
 
 
 class MainPage(QWidget):
-    def __init__(self, formpage=None, doepage: DesignOfExperimentsPage=None, metapage: MetamodelPage=None, optpage=None):
+    def __init__(self, formpage=None, doepage: DesignOfExperimentsPage=None, metapage: MetamodelPage=None, optpage: OptimizationPage=None):
         super().__init__()
         self.setObjectName("Main")
         self.main = QVBoxLayout(self)
@@ -28,15 +29,15 @@ class MainPage(QWidget):
         self.meta_title = ClickableTitleLabel("Metamodeling")
         self.meta_title.setVisible(False)
         self.meta_title.clicked.connect(self.metapage.toggle_collapse)
-        self.opt_title = ClickableTitleLabel("Optimization")
-        self.opt_title.setVisible(False)
     
 
         self.top = QHBoxLayout()
         self.bottom = QHBoxLayout()
 
         self.layout_a = QHBoxLayout()
+        self.layout_a.setAlignment(Qt.AlignTop)
         self.layout_b = QHBoxLayout()
+        self.layout_b.setAlignment(Qt.AlignTop)
 
         self.layout_a.addWidget(self.doe_title)
         self.layout_a.addWidget(self.doepage)
@@ -44,6 +45,7 @@ class MainPage(QWidget):
         self.layout_b.addWidget(self.metapage)
 
         self.top.addLayout(self.layout_a)
+        self.top.addSpacing(5)
         self.top.addLayout(self.layout_b)
 
         self.bottom.addWidget(self.optpage)
@@ -56,6 +58,9 @@ class MainPage(QWidget):
 
         self.main.addLayout(self.top)
         self.main.addLayout(self.bottom)
+
+        self.optpage.section_title.clicked.connect(self.do_strech)
+        self.do_strech()
     
     def handle_collapse(self, page_name: str):
         match page_name:
@@ -63,3 +68,12 @@ class MainPage(QWidget):
                 self.doe_title.setVisible(not self.doepage.showing)
             case "mmd":
                 self.meta_title.setVisible(not self.metapage.showing)
+        self.do_strech()
+    
+    def do_strech(self):
+        if (self.doepage.showing or self.metapage.showing) and self.optpage.showing:
+            self.main.setStretch(0, 1)
+            self.main.setStretch(1, 1)
+        else:
+            self.main.setStretch(0, 0)
+            self.main.setStretch(1, 0)

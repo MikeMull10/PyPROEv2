@@ -3,8 +3,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QIcon, QKeySequence, QAction, QShortcut
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtWebEngineWidgets import QWebEngineView
-from PySide6.QtWebEngineCore import QWebEnginePage
 from qfluentwidgets import (
     FluentWindow, setTheme, setThemeColor, Theme, theme,
     NavigationPushButton, NavigationItemPosition, FluentIcon as FI
