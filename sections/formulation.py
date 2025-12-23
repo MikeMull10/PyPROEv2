@@ -52,7 +52,7 @@ class FormulationPage(QWidget):
 
         main_layout.addStretch()
 
-    def update_options(self, box: ObjectiveItem | EqualityItem | InequalityItem):
+    def update_options(self, box: ObjectiveItem | EqualityItem | InequalityItem) -> None:
         box_value = box.value_box.text()
         is_custom = box.value_box.currentIndex() == -1 or box_value in box.value_box.items
 
@@ -64,7 +64,7 @@ class FormulationPage(QWidget):
         else:
             box.value_box.setText("")
     
-    def update_function_names(self):
+    def update_function_names(self) -> None:
         self.function_names.clear()
         for i in range(self.fnc_section.row_container.count()):
             item: FunctionItem = self.fnc_section.row_container.itemAt(i).widget()
@@ -76,7 +76,7 @@ class FormulationPage(QWidget):
             for i in range(section_type.row_container.count()):
                 self.update_options(section_type.row_container.itemAt(i).widget())            
 
-    def load_from_file(self, file_path):
+    def load_from_file(self, file_path) -> None:
         try:
             if not os.path.exists(file_path):
                 raise FileNotFoundError
@@ -128,7 +128,7 @@ class FormulationPage(QWidget):
         except Exception as e:
             print("Failed to load file:", e)
 
-    def convert_to_fnc(self):
+    def convert_to_fnc(self) -> str:
         fnc_str  = f"#{'-' * 50}\n"
         fnc_str += "# Input File Start\n"
         fnc_str += f"#{'-' * 50}\n\n"
@@ -141,3 +141,6 @@ class FormulationPage(QWidget):
         fnc_str += f"#{'-' * 50}"
 
         return fnc_str
+
+    def is_empty(self) -> bool:
+        return sum(section.row_container.count() for section in [self.var_section, self.con_section, self.obj_section, self.eqs_section, self.iqs_section, self.fnc_section]) == 0

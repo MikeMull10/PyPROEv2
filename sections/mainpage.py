@@ -7,8 +7,6 @@ from sections.designofexperiments import DesignOfExperimentsPage
 from sections.metamodeling import MetamodelPage
 from sections.optimization import OptimizationPage
 
-from qfluentwidgets import ScrollArea, FluentStyleSheet, Theme, TitleLabel
-
 
 class MainPage(QWidget):
     def __init__(self, formpage=None, doepage: DesignOfExperimentsPage=None, metapage: MetamodelPage=None, optpage: OptimizationPage=None):

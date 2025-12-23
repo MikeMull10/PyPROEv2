@@ -19,6 +19,8 @@ from testing.inputfnc2 import InputFile
 from stylesheet.accents import ACCENT_COLORS
 
 from components.helppopup import DocumentationPopup
+from components.savetypepopup import SavePopup, SaveType
+from components.basicpopup import BasicPopup
 
 import sys, ctypes
 
@@ -87,6 +89,7 @@ class App(FluentWindow):
         QApplication.instance().quit()
         QShortcut(QKeySequence("Ctrl+Q"), self).activated.connect(self._close_application)
         QShortcut(QKeySequence("Ctrl+O"), self).activated.connect(self._open_file)
+        QShortcut(QKeySequence("Ctrl+S"), self).activated.connect(self._save_file)
 
     # Functional Logic
     def _close_application(self):
@@ -117,18 +120,32 @@ class App(FluentWindow):
                 self.doe.load_from_file(file_path=filename)
     
     def _save_file(self):
+        save_type: SaveType | None = None
+        if self.doe.is_empty() and self.frm.is_empty():
+            pop = BasicPopup(parent=self, title="Nothing to Save", message="There is nothing to save. Please put data into the DOE Table or Formulation Section.")
+            pop.exec()
+            return
+        elif self.doe.is_empty():
+            save_type = SaveType.FNC
+        elif self.frm.is_empty():
+            save_type = SaveType.DOE
+        else:
+            pop = SavePopup(parent=self)
+            ok, save_type = pop.exec()
+            if not ok: return
+
         saveFile = QFileDialog(
             self,
             "Save File",
             self.settings.value("previous_open_file_dir"),
-            "Optimization function files (*.fnc)"
+            "Optimization function files (*.fnc)" if save_type == SaveType.FNC else "Design of experiment files (*.doe)"
         )
         saveFile.setFileMode(QFileDialog.AnyFile)
         saveFile.setAcceptMode(QFileDialog.AcceptSave)
 
         if saveFile.exec():
             with open(saveFile.selectedFiles()[0], 'w') as file:
-                file.write(self.frm.convert_to_fnc())
+                file.write(self.frm.convert_to_fnc() if save_type == SaveType.FNC else self.doe.save_to_file())
 
     def _start_opt(self):
         fnc = self.frm.convert_to_fnc()
@@ -140,11 +157,11 @@ class App(FluentWindow):
 
         self.opt._solve(fnc)
 
-    def show_documentation(self):
+    def show_documentation(self) -> None:
         popup = DocumentationPopup(self)
         popup.exec()
     
-    def set_app_theme(self):
+    def set_app_theme(self) -> None:
         setTheme(Theme.DARK if self.settings.value("theme") == "Dark" else Theme.LIGHT)
 
         if self.settings.value("accent") == "Custom":
@@ -159,7 +176,7 @@ class App(FluentWindow):
 
         setThemeColor(ACCENT_COLORS.get(self.settings.value("accent"), ACCENT_COLORS.get("Red")))
 
-    def trigger_theme_change(self):
+    def trigger_theme_change(self) -> None:
         self.doe.table.on_selection_changed()
         self.frm.divider.style = theme()
         self.frm.divider.update_style()

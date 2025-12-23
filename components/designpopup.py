@@ -30,7 +30,6 @@ class DesignPopup(MessageBoxBase):
 
         # --- Functions ---
         self.function_section = FunctionsSection(parent, clickable_title=False)
-        self.function_section.title = TitleLabel("Functions: 0")
         if functions:
             [self.function_section.add_row(f.name, f.text) for f in functions]
         else:

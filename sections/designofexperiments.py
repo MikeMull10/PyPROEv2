@@ -146,7 +146,7 @@ class DesignOfExperimentsPage(QWidget):
         # --- Set Initial Setting Visibility ---
         self.adjust_setting_visibility()
     
-    def adjust_setting_visibility(self):
+    def adjust_setting_visibility(self) -> None:
         match MethodType(self.method_type.currentIndex()):
             case MethodType.FACTORIAL:
                 self.level_num_row.show()
@@ -169,12 +169,12 @@ class DesignOfExperimentsPage(QWidget):
                 self.center_points_row.hide()
                 self.levels_taguchi_row.hide()
     
-    def toggle_collapse(self):
+    def toggle_collapse(self) -> None:
         self.showing ^= True
         self.setVisible(self.showing)
         if self.toggle_call: self.toggle_call()
     
-    def get_design_popup(self):
+    def get_design_popup(self) -> None:
         popup = DesignPopup(
             self.variable_num.value(),
             self.functions_num.value(),
@@ -184,8 +184,10 @@ class DesignOfExperimentsPage(QWidget):
         
         if ok:
             self.populate_data(vars, funcs)
+            self.variable_num.setValue(len(vars))
+            self.functions_num.setValue(len(funcs))
     
-    def edit_design_popup(self):
+    def edit_design_popup(self) -> None:
         popup = DesignPopup(
             self.variable_num.value(),
             self.functions_num.value(),
@@ -198,7 +200,7 @@ class DesignOfExperimentsPage(QWidget):
         if ok:
             self.populate_data(vars, funcs)
     
-    def populate_data(self, variables: list[Variable], functions: list[Function]):
+    def populate_data(self, variables: list[Variable], functions: list[Function]) -> None:
         self.table.clear()
         variable_pool = []
         points = []
@@ -244,7 +246,7 @@ class DesignOfExperimentsPage(QWidget):
         self.table.functions = functions
         self.table.populate([[str(d) for d in da] for da in data], headers=headers)
     
-    def load_from_file(self, file_path: str):
+    def load_from_file(self, file_path: str) -> None:
         lines = []
         with open(file_path, 'r') as file:
             for line in file:
@@ -306,5 +308,8 @@ class DesignOfExperimentsPage(QWidget):
             self.table.variables = [Variable(f"X{i + 1}", min(np_data[:, i]), max(np_data[:, i])) for i in range(num_vars)]
             self.table.populate(data=[[str(d) for d in da] for da in data], headers=headers)
     
-    def save_to_file(self):
-        return f"!PyPROE X v{self.parent.version}\n" + self.table.get_save_data()
+    def save_to_file(self) -> str:
+        return f"!PyPROE X v{self.parent.version}\n\n" + self.table.get_save_data()
+
+    def is_empty(self) -> bool:
+        return self.table.columnCount() + self.table.rowCount() == 0

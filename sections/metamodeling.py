@@ -112,13 +112,20 @@ class MetamodelPage(QWidget):
 
         if len(independent_vars) == 0 or len(dependent_vars) == 0:
             return
+        
+        # --- Clear Current Items ---
+        for i in range(self.functions_section.row_container.count()):
+            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
+            self.functions_section.delete_item(item)
 
+        # --- Populate Functions ---
         results = func(independent_vars, dependent_vars, var_names)
         for i, res in enumerate(results, start=1):
             self.functions_section.add_row(name=f"F{i}", value=res)
         
+        # --- Remove Buttons ---
         for i in range(self.functions_section.row_container.count()):
             item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
-            item.up_arrow.deleteLater()
-            item.down_arrow.deleteLater()
-            item.remove_btn.deleteLater()
+            if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
+            if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
+            if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
