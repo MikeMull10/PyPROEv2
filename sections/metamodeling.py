@@ -2,15 +2,21 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
 
 from components.clickabletitle import ClickableTitleLabel
+from components.polyreg import PolyTypes, poly_lookup
+from components.doetable import DOETable
+from components.formsections import FunctionsSection, FunctionItem
 from sections.designofexperiments import make_row
 
 from qfluentwidgets import ComboBox, TextEdit, PrimaryPushButton
 
+from pprint import pprint as pp
+
 class MetamodelPage(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, doe_table: DOETable=None, parent=None):
         super().__init__()
         self.setObjectName("Metamodel")
-        self.parent = None
+        self.parent = parent
+        self.doe_table = doe_table
         self.showing = True
         self.toggle_call: callable = None
 
@@ -52,21 +58,28 @@ class MetamodelPage(QWidget):
 
         self.calculate_btn = PrimaryPushButton("Calculate")
         self.calculate_btn.setCursor(Qt.PointingHandCursor)
+        self.calculate_btn.clicked.connect(self.calculate)
         options_section.addWidget(self.calculate_btn)
 
         options_section.addStretch()
 
-        self.results = TextEdit()
+        self.results = QWidget()
+        results_layout = QVBoxLayout(self.results)
+        self.functions_section = FunctionsSection(parent=parent, clickable_title=True)
+        self.functions_section.add_btn.deleteLater()
+
+        results_layout.addWidget(self.functions_section)
+        results_layout.addStretch()
         layout.addWidget(self.results)
 
-        layout.setStretch(0, 2)
-        layout.setStretch(1, 3)
+        layout.setStretch(0, 4)
+        layout.setStretch(1, 5)
     
     def update_function_options(self):
         self.function_type.clear()
         
         if self.method_type.currentIndex() == 0:
-            self.function_type.addItems(["Linear Polynomial", "Quadratic Polynomial with No Interation", "Quadratic Polynomial with Interation"])
+            self.function_type.addItems(["Linear Polynomial", "Quadratic Polynomial with No Interaction", "Quadratic Polynomial with Interaction"])
         else:
             self.function_type.addItems(["Linear", "Cubic", "Thin Plate Spline", "Gaussian", "Multiquadratic", "Inversely Multiquadratic",
                                          "Compactly Supported (2,0)", "Compactly Supported (2,1)", "Compactly Supported (2,2)",
@@ -76,3 +89,36 @@ class MetamodelPage(QWidget):
         self.showing ^= True
         self.setVisible(self.showing)
         if self.toggle_call: self.toggle_call()
+    
+    def calculate(self):
+        method_type = self.method_type.currentIndex()
+
+        if method_type == 0:  # Polynomial Regression
+            self.do_poly_reg()
+        
+        else:                 # Radial Basis Function
+            ...
+    
+    def do_poly_reg(self):
+        poly_type = PolyTypes(self.function_type.currentIndex())
+
+        func = poly_lookup.get(poly_type, None)
+        if not func:
+            return
+
+        independent_vars = self.doe_table.get_independent()
+        dependent_vars = self.doe_table.get_dependent()
+        var_names: list[str] = [var.symbol for var in self.doe_table.variables]
+
+        if len(independent_vars) == 0 or len(dependent_vars) == 0:
+            return
+
+        results = func(independent_vars, dependent_vars, var_names)
+        for i, res in enumerate(results, start=1):
+            self.functions_section.add_row(name=f"F{i}", value=res)
+        
+        for i in range(self.functions_section.row_container.count()):
+            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
+            item.up_arrow.deleteLater()
+            item.down_arrow.deleteLater()
+            item.remove_btn.deleteLater()

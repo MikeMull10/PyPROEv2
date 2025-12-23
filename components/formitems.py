@@ -1,9 +1,8 @@
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit
-)
+from PySide6.QtWidgets import QWidget, QHBoxLayout
+
 from PySide6.QtCore import Qt
 
-from qfluentwidgets import LineEdit, TextEdit, EditableComboBox, TitleLabel, SubtitleLabel, BodyLabel, PushButton, ToolButton, FluentIcon as FI
+from qfluentwidgets import LineEdit, EditableComboBox, SubtitleLabel, ToolButton, FluentIcon as FI
 
 from components.equationbutton import EquationButton
 from components.flipequality import FlipEquality

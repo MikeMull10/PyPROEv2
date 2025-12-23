@@ -41,7 +41,7 @@ class App(FluentWindow):
         # --- PAGES ---
         self.frm = FormulationPage(self)
         self.doe = DesignOfExperimentsPage(self)
-        self.mmd = MetamodelPage()
+        self.mmd = MetamodelPage(parent=self, doe_table=self.doe.table)
         self.opt = OptimizationPage(self.frm)
         self.page_settings = SettingsPage(self.trigger_theme_change)
         self.main_page = MainPage(formpage=self.frm, doepage=self.doe, metapage=self.mmd, optpage=self.opt)

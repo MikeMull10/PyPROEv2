@@ -23,7 +23,7 @@ class MainPage(QWidget):
         self.metapage.toggle_call = lambda: self.handle_collapse(page_name="mmd")
         self.optpage = optpage
 
-        self.doe_title = ClickableTitleLabel("Design of Experiments")
+        self.doe_title = ClickableTitleLabel("Design of Experiments    ")  # this is DISGUSTING, but works so damn well for what I want
         self.doe_title.setVisible(False)
         self.doe_title.clicked.connect(self.doepage.toggle_collapse)
         self.meta_title = ClickableTitleLabel("Metamodeling")

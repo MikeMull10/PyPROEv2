@@ -4,7 +4,8 @@ from PySide6.QtGui import QKeySequence, QColor
 
 from testing.fnc_objects import Variable, Function
 
-from qfluentwidgets import TableWidget, TableView, themeColor, theme, Theme, ToolButton, FluentIcon as FI
+from qfluentwidgets import TableWidget, themeColor, theme, Theme, ToolButton, FluentIcon as FI
+import numpy as np
 
 
 class DOETable(TableWidget):
@@ -144,6 +145,9 @@ class DOETable(TableWidget):
         super().clear()
         self.setRowCount(0)
         self.setColumnCount(0)
+        self.variables.clear()
+        self.functions.clear()
+        self.headers.clear()
     
     def delete_row_from_button(self):
         btn = self.sender()
@@ -216,8 +220,6 @@ class DOETable(TableWidget):
             result = func(values)
             item = QTableWidgetItem(str(result))
             self.setItem(row, end + i, item)
-        
-        print(self.get_save_data())
     
     def get_row_data(self, row: int) -> list[str]:
         values = []
@@ -242,3 +244,26 @@ class DOETable(TableWidget):
             ret += f"{fun};\n"
         
         return ret
+    
+    def get(self, start, stop) -> np.ndarray:
+        if self.rowCount() <= 1 or self.columnCount() <= 1:
+            return []
+
+        data = []
+        for i in range(self.rowCount()):
+            row = []
+            for ii in range(start, stop):
+                try:
+                    row.append(float(self.item(i, ii).text()))
+                except ValueError:
+                    raise ValueError(f"Error converting a variable to a float at ROW {i}, COL {i}, VALUE {self.item(i, ii).text()}.")
+                
+            data.append(row)
+
+        return np.array(data)
+
+    def get_independent(self) -> np.ndarray:
+        return self.get(1, len(self.variables) + 1)
+
+    def get_dependent(self) -> np.ndarray:
+        return self.get(len(self.variables) + 1, self.columnCount())

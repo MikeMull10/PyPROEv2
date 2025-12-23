@@ -240,9 +240,9 @@ class DesignOfExperimentsPage(QWidget):
             data.append(data_point)
         
         headers = [var.symbol.upper() for var in variables] + [fun.name.upper() for fun in functions]
-        self.table.populate([[str(d) for d in da] for da in data], headers=headers)
         self.table.variables = variables
         self.table.functions = functions
+        self.table.populate([[str(d) for d in da] for da in data], headers=headers)
     
     def load_from_file(self, file_path: str):
         lines = []
@@ -287,9 +287,9 @@ class DesignOfExperimentsPage(QWidget):
                         sym, val = line.replace(';', '').split('=')
                         funcs.append(Function(sym, val, [var.symbol for var in vars]))
             
-                self.table.populate([[str(d) for d in da] for da in data], headers=headers)
                 self.table.variables = vars
                 self.table.functions = funcs
+                self.table.populate([[str(d) for d in da] for da in data], headers=headers)
 
         else:                         # Legacy
             num_points, num_vars, num_levels, num_funcs = map(int, lines.pop(0).split())
@@ -301,7 +301,9 @@ class DesignOfExperimentsPage(QWidget):
                 headers.append(f"X{i + 1}")
             for i in range(num_funcs):
                 headers.append(f"F{i + 1}")
-        
+
+            np_data = np.array(data)
+            self.table.variables = [Variable(f"X{i + 1}", min(np_data[:, i]), max(np_data[:, i])) for i in range(num_vars)]
             self.table.populate(data=[[str(d) for d in da] for da in data], headers=headers)
     
     def save_to_file(self):
