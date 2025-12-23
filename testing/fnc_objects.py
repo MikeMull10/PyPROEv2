@@ -198,6 +198,8 @@ class Function:
 
         # Detect variable names using sympy
         self.expr = get_expr(function, [v.lower() for v in variables], constants=self.constants)
+        if self.constants:
+            self.expr = self.expr.subs(self.constants)
         self.variables = sorted(symbols(' '.join([v.lower() for v in variables]), real=True, seq=True), key=lambda s: str(s))
 
         # Create fast evaluation function

@@ -89,7 +89,7 @@ class FormulationPage(QWidget):
             
             ### CONSTANTS
             for con in file.constants:
-                self.con_section.add_row(con.symbol.upper(), con.value.upper())
+                self.con_section.add_row(con.symbol.upper(), con.value)
             
             ### OBJECTIVES
             for obj in file.objectives:

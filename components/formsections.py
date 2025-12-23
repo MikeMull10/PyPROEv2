@@ -152,7 +152,7 @@ class ConstantsSection(FormSection):
         for i in range(self.row_container.count()):
             item: ConstantItem = self.row_container.itemAt(i).widget()
 
-            ret += f"{item.name_box.text()} = {item.value_box.text()};\n"
+            ret += f"{item.name_box.text().lower()} = {item.value_box.text()};\n"
         
         return ret
 

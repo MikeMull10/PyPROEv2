@@ -84,14 +84,12 @@ class App(FluentWindow):
         )
         self.addSubInterface(self.page_settings, FI.SETTING, "Settings", NavigationItemPosition.BOTTOM)
 
-    # Shortcuts / Menus
     def init_shortcuts(self):
         QApplication.instance().quit()
         QShortcut(QKeySequence("Ctrl+Q"), self).activated.connect(self._close_application)
         QShortcut(QKeySequence("Ctrl+O"), self).activated.connect(self._open_file)
         QShortcut(QKeySequence("Ctrl+S"), self).activated.connect(self._save_file)
 
-    # Functional Logic
     def _close_application(self):
         p = self.opt.process
         if p and p.is_alive():
@@ -118,17 +116,25 @@ class App(FluentWindow):
             
             elif filename.endswith(".doe"):
                 self.doe.load_from_file(file_path=filename)
+
+            else:
+                pop = BasicPopup(self, "Unknown File Extension", f".{filename.split('.')[1]} extension is unknown. Please use .doe for a Design of Experiment file and .fnc for Forumation file.")
+                pop.exec()
     
     def _save_file(self):
         save_type: SaveType | None = None
+        # --- Both DOE Table and Formulation are empty ---
         if self.doe.is_empty() and self.frm.is_empty():
             pop = BasicPopup(parent=self, title="Nothing to Save", message="There is nothing to save. Please put data into the DOE Table or Formulation Section.")
             pop.exec()
             return
+        # --- Only DOE TABLE is empty, so Formulation should be saved ---
         elif self.doe.is_empty():
             save_type = SaveType.FNC
+        # --- Only Formulation is empty, so the DOE Table should be saved ---
         elif self.frm.is_empty():
             save_type = SaveType.DOE
+        # --- Both are filled, so ask user which one they want to save ---
         else:
             pop = SavePopup(parent=self)
             ok, save_type = pop.exec()

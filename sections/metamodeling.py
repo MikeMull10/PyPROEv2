@@ -45,7 +45,6 @@ class MetamodelPage(QWidget):
         # --- Functions ---
         self.function_type = ComboBox()
         self.function_type_row = make_row("Function:", self.function_type)
-        self.update_function_options()
         options_section.addWidget(self.function_type_row)
         options_section.addSpacing(5)
 
@@ -74,16 +73,21 @@ class MetamodelPage(QWidget):
 
         layout.setStretch(0, 4)
         layout.setStretch(1, 5)
+        self.update_function_options()
     
     def update_function_options(self):
         self.function_type.clear()
         
         if self.method_type.currentIndex() == 0:
             self.function_type.addItems(["Linear Polynomial", "Quadratic Polynomial with No Interaction", "Quadratic Polynomial with Interaction"])
+            self.poly_order_row.hide()
+            self.calculate_btn.setEnabled(True)
         else:
             self.function_type.addItems(["Linear", "Cubic", "Thin Plate Spline", "Gaussian", "Multiquadratic", "Inversely Multiquadratic",
                                          "Compactly Supported (2,0)", "Compactly Supported (2,1)", "Compactly Supported (2,2)",
                                          "Compactly Supported (3,0)", "Compactly Supported (3,1)", "Compactly Supported (3,2)", "Compactly Supported (3,3)"])
+            self.poly_order_row.show()
+            self.calculate_btn.setEnabled(False)
 
     def toggle_collapse(self):
         self.showing ^= True
