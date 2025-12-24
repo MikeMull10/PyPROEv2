@@ -1,12 +1,9 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QHBoxLayout, QComboBox,
-    QSpacerItem, QSizePolicy, QPushButton, QLineEdit,
-    QLayout, QApplication, QFormLayout, QSpinBox, QDoubleSpinBox
+    QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy, QLayout, QApplication
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont
 
-from qfluentwidgets import SpinBox, DoubleSpinBox, ComboBox, PushButton, SubtitleLabel, PrimaryPushButton
+from qfluentwidgets import SpinBox, DoubleSpinBox, ComboBox, PushButton, PrimaryPushButton
 
 from testing.inputfnc2 import InputFile
 from testing.optimize import Optimize as Opt
@@ -15,6 +12,8 @@ from testing.optimization_data import Opt as OptStatus
 from testing.optimization_data import Optimization as OptObj
 
 from components.clickabletitle import ClickableTitleLabel
+
+from sections.designofexperiments import make_row
 
 from sections.graph import ToggleWidget, MplWidget
 
@@ -145,18 +144,6 @@ class OptimizationPage(QWidget):
         self.options_section_widget = QWidget()
         opt_wrapper.addWidget(self.options_section_widget)
         self.layout = QVBoxLayout(self.options_section_widget)
-
-        # --- Row helper function ---
-        def make_row(label_text, widget):
-            row = QWidget()
-            layout = QHBoxLayout(row)
-            layout.setContentsMargins(0, 0, 0, 0)
-            layout.setSpacing(5)
-            label = SubtitleLabel(label_text)
-            layout.addWidget(label)
-            layout.addWidget(widget)
-            row.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
-            return row
 
         # --- Solver Type Row ---
         self.solver_type = ComboBox()

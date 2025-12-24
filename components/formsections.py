@@ -1,9 +1,7 @@
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QTextEdit
-)
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
 
-from qfluentwidgets import TextEdit, TitleLabel, SubtitleLabel, PushButton, PrimaryToolButton, ToolButton, FluentIcon as FI
+from qfluentwidgets import TitleLabel, PrimaryToolButton, FluentIcon as FI
 
 from components.formitems import DefaultItem, VariableItem, ConstantItem, ObjectiveItem, FunctionItem, EqualityItem, InequalityItem
 from components.clickabletitle import ClickableSubtitleLabelIcon
@@ -14,7 +12,7 @@ class FormSection(QWidget):
         self.number_items = 0
         self.showing = True
 
-        # Main layout for the section
+        # --- Main layout for the section ---
         self.main_layout = QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
 
@@ -27,7 +25,7 @@ class FormSection(QWidget):
             self.title.clicked.connect(self.toggle_view)
         else:
             self.title = TitleLabel(f"{self.title_raw}: 0")
-        # self.title.setStyleSheet("TitleLabel {font-family: \"Courier New\", monospace}")
+        
         self.add_btn = PrimaryToolButton(FI.ADD)
         self.add_btn.setCursor(Qt.PointingHandCursor)
         self.add_btn.clicked.connect(lambda: self.add_row())
@@ -36,7 +34,6 @@ class FormSection(QWidget):
         self.top_bar.addStretch()
         self.top_bar.addWidget(self.add_btn)
 
-        # Add top bar to main layout
         self.main_layout.addLayout(self.top_bar)
 
         # --- Row container layout ---
@@ -109,6 +106,14 @@ class FormSection(QWidget):
 
     def get_fnc(self) -> str:
         raise NotImplementedError
+    
+    def clear(self) -> None:
+        while self.row_container.count() > 0:
+            item = self.row_container.itemAt(0).widget()
+            self.row_container.removeWidget(item)
+            item.deleteLater()
+        
+        self.update_count()
 
 class VariablesSection(FormSection):
     def __init__(self, clickable_title: bool=True):

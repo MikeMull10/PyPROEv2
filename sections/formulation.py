@@ -1,14 +1,19 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout
 )
+from PySide6.QtGui import QFont, QIcon
 from PySide6.QtCore import Qt
-from qfluentwidgets import theme, SmoothScrollArea, FluentIcon as FI
+from qfluentwidgets import theme, Theme, SmoothScrollArea, SubtitleLabel, FluentIconBase, ToolButton, FluentIcon as FI
 
 from components.formsections import FormSection, VariablesSection, ConstantsSection, ObjectivesSection, FunctionsSection, EqualitiesSection, InequalitiesSection, FunctionItem, ObjectiveItem, InequalityItem, EqualityItem
 from components.function_parse import parse_function_offset
 from components.divider import Divider
 from testing.inputfnc2 import InputFile
 import os
+
+class ResetIcon(FluentIconBase):
+    def path(self, _theme=Theme.AUTO):
+        return "assets/reset-white.svg" if theme() == Theme.DARK else "assets/reset-black.svg"
 
 class FormulationPage(QWidget):
     def __init__(self, parent=None):
@@ -32,6 +37,21 @@ class FormulationPage(QWidget):
         main_layout.setContentsMargins(4, 4, 4, 4)
         main_layout.setSpacing(8)
 
+        title_row = QWidget()
+        layout = QHBoxLayout(title_row)
+        title = SubtitleLabel("Formulation")
+        font = QFont()
+        font.setPointSize(18)
+        title.setFont(font)
+
+        clear_btn = ToolButton(ResetIcon())
+        clear_btn.clicked.connect(self.clear)
+        clear_btn.setToolTip("Clear the Formulation section.")
+        clear_btn.setCursor(Qt.PointingHandCursor)
+
+        layout.addWidget(title)
+        layout.addWidget(clear_btn)
+
         scroll.setWidget(main_content)
 
         self.var_section = VariablesSection()
@@ -42,6 +62,7 @@ class FormulationPage(QWidget):
         self.fnc_section = FunctionsSection(parent, function_name_update=self.update_function_names)
         self.divider = Divider(style=theme())
 
+        main_layout.addWidget(title_row)
         main_layout.addWidget(self.var_section)
         main_layout.addWidget(self.con_section)
         main_layout.addWidget(self.fnc_section)
@@ -144,3 +165,7 @@ class FormulationPage(QWidget):
 
     def is_empty(self) -> bool:
         return sum(section.row_container.count() for section in [self.var_section, self.con_section, self.obj_section, self.eqs_section, self.iqs_section, self.fnc_section]) == 0
+
+    def clear(self) -> None:
+        for section in [self.var_section, self.con_section, self.obj_section, self.eqs_section, self.iqs_section, self.fnc_section]:
+            section.clear()
