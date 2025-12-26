@@ -2,9 +2,6 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from enum import Enum
 
-# -----------------------------
-# RBF Types
-# -----------------------------
 class RBFType(Enum):
     LINEAR = 0
     CUBIC = 1
@@ -12,106 +9,261 @@ class RBFType(Enum):
     GAUSSIAN = 3
     MULTIQUADRIC = 4
     INVERSE_MULTIQUADRIC = 5
+    CS_2_0 = 6
+    CS_2_1 = 7
+    CS_2_2 = 8
+    CS_3_0 = 9
+    CS_3_1 = 10
+    CS_3_2 = 11
+    CS_3_3 = 12
 
-# -----------------------------
-# Kernel evaluation
-# -----------------------------
+def wendland_kernel(r, kernel: RBFType, epsilon):
+    """Compactly supported Wendland kernels."""
+    rho = epsilon * r
+    t = np.maximum(0.0, 1.0 - rho)
+
+    if kernel in (RBFType.CS_2_0, RBFType.CS_3_0):
+        return t**2
+
+    elif kernel in (RBFType.CS_2_1, RBFType.CS_3_1):
+        return t**4 * (4*rho + 1)
+
+    elif kernel in (RBFType.CS_2_2, RBFType.CS_3_2):
+        return t**6 * (35*rho**2 + 18*rho + 3)
+
+    elif kernel == RBFType.CS_3_3:
+        return t**8 * (32*rho**3 + 25*rho**2 + 8*rho + 1)
+
+    else:
+        raise NotImplementedError(kernel)
+
 def rbf_kernel(r, kernel: RBFType, epsilon=1.0):
+    """Compute RBF kernel values for distance matrix r."""
     if kernel == RBFType.GAUSSIAN:
         return np.exp(-(epsilon*r)**2)
+
     elif kernel == RBFType.MULTIQUADRIC:
         return np.sqrt(1 + (epsilon*r)**2)
+
     elif kernel == RBFType.INVERSE_MULTIQUADRIC:
         return 1 / np.sqrt(1 + (epsilon*r)**2)
+
     elif kernel == RBFType.LINEAR:
         return r
+
     elif kernel == RBFType.CUBIC:
         return r**3
+
     elif kernel == RBFType.THIN_PLATE_SPLINE:
-        return r**2 * np.log(1 + r)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            result = np.where(r > 1e-10, r**2 * np.log(r), 0)
+        return result
+
+    elif kernel.name.startswith("CS_"):
+        return wendland_kernel(r, kernel, epsilon)
+
     else:
-        raise NotImplementedError(f"Kernel {kernel} not implemented")
+        raise NotImplementedError(kernel)
 
-# -----------------------------
-# Fit RBF manually
-# -----------------------------
-def fit_rbf(X, y, kernel: RBFType, epsilon=1.0):
+def needs_polynomial(kernel: RBFType):
+    """Check if kernel requires polynomial augmentation."""
+    # Conditionally positive definite kernels need polynomial terms
+    return kernel in (RBFType.THIN_PLATE_SPLINE, RBFType.LINEAR, RBFType.CUBIC)
+
+def build_polynomial_matrix(X, degree=1):
+    """Build polynomial basis matrix for given points."""
+    X = np.asarray(X)
+    n, d = X.shape
+    
+    if degree == 0:
+        # Just constant term
+        return np.ones((n, 1))
+    elif degree == 1:
+        # Constant + linear terms: [1, x1, x2, ..., xd]
+        return np.column_stack([np.ones(n), X])
+    else:
+        raise NotImplementedError(f"Polynomial degree {degree} not implemented")
+
+def fit_rbf(X, y, kernel: RBFType, epsilon=1.0, smooth=0.0, use_polynomial=None):
+    """
+    Fit RBF interpolation to data.
+    
+    Parameters:
+    -----------
+    X : array-like, shape (n, d)
+        Input points
+    y : array-like, shape (n,)
+        Target values
+    kernel : RBFType
+        RBF kernel type
+    epsilon : float
+        Shape parameter for the kernel
+    smooth : float
+        Smoothing/regularization parameter (0 = exact interpolation)
+    use_polynomial : bool or None
+        Whether to include polynomial terms. If None, automatically determined.
+    
+    Returns:
+    --------
+    weights : dict
+        Dictionary containing 'rbf_weights' and optionally 'poly_weights'
+    """
+    X = np.asarray(X)
+    y = np.asarray(y)
+    n = len(X)
+    
+    # Determine if polynomial terms are needed
+    if use_polynomial is None:
+        use_polynomial = needs_polynomial(kernel)
+    
+    # Build kernel matrix
     D = cdist(X, X)
-    A = rbf_kernel(D, kernel, epsilon)
-    weights = np.linalg.solve(A, y)
-    return weights
+    K = rbf_kernel(D, kernel, epsilon)
+    
+    if not use_polynomial:
+        # Simple case: no polynomial terms
+        if smooth > 0:
+            K += np.eye(n) * smooth
+        rbf_weights = np.linalg.solve(K, y)
+        return {'rbf_weights': rbf_weights, 'poly_weights': None, 'centers': X}
+    
+    else:
+        # Augmented system with polynomial terms
+        P = build_polynomial_matrix(X, degree=1)
+        m = P.shape[1]
+        
+        # Build augmented system: [K P; P^T 0] [w; c] = [y; 0]
+        A = np.zeros((n + m, n + m))
+        A[:n, :n] = K
+        if smooth > 0:
+            A[:n, :n] += np.eye(n) * smooth
+        A[:n, n:] = P
+        A[n:, :n] = P.T
+        
+        b = np.zeros(n + m)
+        b[:n] = y
+        
+        # Solve augmented system
+        solution = np.linalg.solve(A, b)
+        rbf_weights = solution[:n]
+        poly_weights = solution[n:]
+        
+        return {
+            'rbf_weights': rbf_weights,
+            'poly_weights': poly_weights,
+            'centers': X
+        }
 
-# -----------------------------
-# Evaluate RBF
-# -----------------------------
-def eval_rbf(X_eval, X, weights, kernel: RBFType, epsilon=1.0):
+def eval_rbf(X_eval, weights_dict, kernel: RBFType, epsilon=1.0):
+    """
+    Evaluate RBF interpolant at new points.
+    
+    Parameters:
+    -----------
+    X_eval : array-like, shape (m, d)
+        Evaluation points
+    weights_dict : dict
+        Dictionary from fit_rbf containing weights and centers
+    kernel : RBFType
+        RBF kernel type
+    epsilon : float
+        Shape parameter
+    
+    Returns:
+    --------
+    y_eval : array, shape (m,)
+        Interpolated values
+    """
+    X_eval = np.asarray(X_eval)
+    X = weights_dict['centers']
+    rbf_weights = weights_dict['rbf_weights']
+    poly_weights = weights_dict.get('poly_weights')
+    
+    # Evaluate RBF terms
     D = cdist(X_eval, X)
     K = rbf_kernel(D, kernel, epsilon)
-    return K @ weights
-
-# -----------------------------
-# Create human-readable string
-# -----------------------------
-def rbf_term_str_explicit(w, c, kernel: RBFType, epsilon=1.0):
-    # create explicit squared distance string
-    dist_str = " + ".join([f"(x{i+1} - {v})**2" for i, v in enumerate(c)])
-    dist_expr = f"sqrt({dist_str})"
+    y_eval = K @ rbf_weights
     
+    # Add polynomial terms if present
+    if poly_weights is not None:
+        P = build_polynomial_matrix(X_eval, degree=1)
+        y_eval += P @ poly_weights
+    
+    return y_eval
+
+def rbf_term_str(w, center, kernel: RBFType, epsilon=1.0):
+    """Generate string representation of single RBF term."""
+    dist_sq = " + ".join(
+        [f"(x{i+1} - {v:.15g})**2" for i, v in enumerate(center)]
+    )
+    r = f"sqrt({dist_sq})"
+    eps_str = f"{epsilon:.15g}"
+    rho = f"{eps_str}*{r}"
+    t = f"max(0, 1 - {rho})"
+
     if kernel == RBFType.GAUSSIAN:
-        return f"{w} * exp(-{epsilon}*({dist_str}))"
+        core = f"exp(-({eps_str})**2 * ({dist_sq}))"
+
     elif kernel == RBFType.MULTIQUADRIC:
-        return f"{w} * sqrt(1 + ({epsilon}*{dist_expr})**2)"
+        core = f"sqrt(1 + ({eps_str}*{r})**2)"
+
     elif kernel == RBFType.INVERSE_MULTIQUADRIC:
-        return f"{w} / sqrt(1 + ({epsilon}*{dist_expr})**2)"
+        core = f"1/sqrt(1 + ({eps_str}*{r})**2)"
+
     elif kernel == RBFType.LINEAR:
-        return f"{w} * {dist_expr}"
+        core = r
+
     elif kernel == RBFType.CUBIC:
-        return f"{w} * ({dist_expr})**3"
+        core = f"({r})**3"
+
     elif kernel == RBFType.THIN_PLATE_SPLINE:
-        return f"{w} * ({dist_expr})**2 * log(1 + {dist_expr})"
+        core = f"({r})**2 * log({r}) if {r} > 0 else 0"
+
+    elif kernel in (RBFType.CS_2_0, RBFType.CS_3_0):
+        core = f"({t})**2"
+
+    elif kernel in (RBFType.CS_2_1, RBFType.CS_3_1):
+        core = f"({t})**4 * (4*{rho} + 1)"
+
+    elif kernel in (RBFType.CS_2_2, RBFType.CS_3_2):
+        core = f"({t})**6 * (35*{rho}**2 + 18*{rho} + 3)"
+
+    elif kernel == RBFType.CS_3_3:
+        core = f"({t})**8 * (32*{rho}**3 + 25*{rho}**2 + 8*{rho} + 1)"
+
     else:
-        raise NotImplementedError(f"Kernel {kernel} not implemented")
+        raise NotImplementedError(kernel)
 
-def rbf_equation_str_explicit(weights, centers, kernel: RBFType, epsilon=1.0):
-    terms = [rbf_term_str_explicit(w, c, kernel, epsilon) for w, c in zip(weights, centers)]
-    return " + ".join(terms)
+    return f"{w:.15g} * ({core})"
 
-# -----------------------------
-# Your 2D data
-# -----------------------------
-if __name__ == "__main__":
-    X = np.array([
-        [0.02, 0.001],
-        [0.02, 0.0055],
-        [0.02, 0.01],
-        [0.11, 0.001],
-        [0.11, 0.0055],
-        [0.11, 0.01],
-        [0.2, 0.001],
-        [0.2, 0.0055],
-        [0.2, 0.01]
-    ])
+def rbf_equation_str(weights_dict, kernel: RBFType, epsilon=1.0):
+    """Generate full equation string for RBF interpolant."""
+    rbf_weights = weights_dict['rbf_weights']
+    centers = weights_dict['centers']
+    poly_weights = weights_dict.get('poly_weights')
+    
+    terms = [
+        rbf_term_str(w, c, kernel, epsilon)
+        for w, c in zip(rbf_weights, centers)
+    ]
+    
+    # Add polynomial terms if present
+    if poly_weights is not None:
+        n_dim = centers.shape[1]
+        terms.append(f"{poly_weights[0]:.15g}")  # constant
+        for i in range(n_dim):
+            terms.append(f"{poly_weights[i+1]:.15g} * x{i+1}")
+    
+    return f"\n{' ' * 3} + ".join(terms)
 
-    y = np.array([
-        [2.867017456, 0.001871543, 408.0895977],
-        [13.94914262, 0.001655596, 83.87612284],
-        [22.05398043, 0.001439648, 53.0516477],
-        [16.09940571, 6.31671e-05, 72.67349],
-        [86.72727803, 6.18692e-05, 13.49056521],
-        [154.377863, 6.05712e-05, 7.578806814],
-        [29.33179397, 1.91473e-05, 39.88845692],
-        [159.5054134, 1.89314e-05, 7.335174241],
-        [286.7017456, 1.87154e-05, 4.080895977]
-    ])
-
-    # -----------------------------
-    # Fit RBFs and print explicit equations
-    # -----------------------------
-    kernel = RBFType.GAUSSIAN
-    epsilon = 2.0
-
-    for i in range(y.shape[1]):
-        weights = fit_rbf(X, y[:, i], kernel, epsilon)
-        eq_str = rbf_equation_str_explicit(weights, X, kernel, epsilon)
-        print(f"\nRBF Equation for f{i+1}:\n")
-        print(eq_str)
+def generate_rbf(X: np.array, y: np.array, rbf_type: RBFType, epsilon: float, smooth: float=0.0, variable_names=None):
+    import re
+    weights = fit_rbf(X, y, rbf_type, epsilon=epsilon, smooth=smooth)
+    equation = rbf_equation_str(weights, rbf_type, epsilon)
+    
+    # Replace variable names if custom names provided
+    if variable_names is not None:
+        for i, var_name in enumerate(variable_names):
+            equation = re.sub(rf'\bx{i+1}\b', var_name, equation)
+    
+    return equation

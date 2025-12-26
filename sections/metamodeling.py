@@ -5,9 +5,10 @@ from components.clickabletitle import ClickableTitleLabel
 from components.polyreg import PolyTypes, poly_lookup
 from components.doetable import DOETable
 from components.formsections import FunctionsSection, FunctionItem
+from components.rbf import RBFType, generate_rbf
 from sections.designofexperiments import make_row
 
-from qfluentwidgets import ComboBox, TextEdit, PrimaryPushButton
+from qfluentwidgets import ComboBox, PrimaryPushButton
 
 from pprint import pprint as pp
 
@@ -81,13 +82,11 @@ class MetamodelPage(QWidget):
         if self.method_type.currentIndex() == 0:
             self.function_type.addItems(["Linear Polynomial", "Quadratic Polynomial with No Interaction", "Quadratic Polynomial with Interaction"])
             self.poly_order_row.hide()
-            self.calculate_btn.setEnabled(True)
         else:
             self.function_type.addItems(["Linear", "Cubic", "Thin Plate Spline", "Gaussian", "Multiquadratic", "Inversely Multiquadratic",
                                          "Compactly Supported (2,0)", "Compactly Supported (2,1)", "Compactly Supported (2,2)",
                                          "Compactly Supported (3,0)", "Compactly Supported (3,1)", "Compactly Supported (3,2)", "Compactly Supported (3,3)"])
             self.poly_order_row.show()
-            self.calculate_btn.setEnabled(False)
 
     def toggle_collapse(self):
         self.showing ^= True
@@ -101,7 +100,7 @@ class MetamodelPage(QWidget):
             self.do_poly_reg()
         
         else:                 # Radial Basis Function
-            ...
+            self.do_rbf()
     
     def do_poly_reg(self):
         poly_type = PolyTypes(self.function_type.currentIndex())
@@ -118,14 +117,36 @@ class MetamodelPage(QWidget):
             return
         
         # --- Clear Current Items ---
-        for i in range(self.functions_section.row_container.count()):
-            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
-            self.functions_section.delete_item(item)
+        self.functions_section.clear()
 
         # --- Populate Functions ---
         results = func(independent_vars, dependent_vars, var_names)
         for i, res in enumerate(results, start=1):
             self.functions_section.add_row(name=f"F{i}", value=res)
+        
+        # --- Remove Buttons ---
+        for i in range(self.functions_section.row_container.count()):
+            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
+            if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
+            if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
+            if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
+
+    def do_rbf(self):
+        rbf = RBFType(self.function_type.currentIndex())
+
+        independent_vars = self.doe_table.get_independent()
+        dependent_vars = self.doe_table.get_dependent()
+        var_names: list[str] = [var.symbol for var in self.doe_table.variables]
+
+        if len(independent_vars) == 0 or len(dependent_vars) == 0:
+            return
+        
+        # --- Clear Current Items ---
+        self.functions_section.clear()
+
+        # --- Populate Functions ---
+        for i in range(dependent_vars.shape[1]):
+            self.functions_section.add_row(name=f"F{i + 1}", value=generate_rbf(independent_vars, dependent_vars[:, i], rbf, epsilon=1.0, variable_names=var_names))
         
         # --- Remove Buttons ---
         for i in range(self.functions_section.row_container.count()):

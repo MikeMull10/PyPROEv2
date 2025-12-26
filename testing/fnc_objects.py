@@ -12,7 +12,7 @@ from sympy import (
     exp, log, ln,
     sqrt, Abs, pi,
     Sum, symbols, sympify, lambdify,
-    diff, im, Derivative, re, sign, E, N
+    diff, im, Derivative, re, sign, E, N, Max
 )
 
 locals = {
@@ -25,7 +25,7 @@ locals = {
     'sqrt': sqrt, 'abs': Abs,
     'sum': Sum, 'pi': pi,
     'im': im, 'Derivative': Derivative, 're': re,
-    'sign': sign, 'e': E,
+    'sign': sign, 'e': E, 'max': Max
 }
 
 def replace_isum(match: regex.Match):
