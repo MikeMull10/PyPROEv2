@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 
 from components.clickabletitle import ClickableTitleLabel
 from components.polyreg import PolyTypes, poly_lookup
@@ -72,9 +72,10 @@ class MetamodelPage(QWidget):
         results_layout.addStretch()
         layout.addWidget(self.results)
 
-        layout.setStretch(0, 4)
-        layout.setStretch(1, 5)
+        layout.setStretch(0, 0)
+        layout.setStretch(1, 1)
         self.update_function_options()
+        self.resize_function_btns()
     
     def update_function_options(self):
         self.function_type.clear()
@@ -130,6 +131,8 @@ class MetamodelPage(QWidget):
             if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
             if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
             if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
+        
+        self.resize_function_btns()
 
     def do_rbf(self):
         rbf = RBFType(self.function_type.currentIndex())
@@ -154,3 +157,17 @@ class MetamodelPage(QWidget):
             if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
             if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
             if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
+    
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.resize_function_btns()
+    
+    def resize_function_btns(self):
+        size: QSize = self.functions_section.size()
+        width = size.width()
+        print(width, width // 8)
+
+        for i in range(self.functions_section.row_container.count()):
+            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
+            item.value_box.clamp_factor = width // 8
+            item.value_box.set_display_text()

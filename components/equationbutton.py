@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtWidgets import QVBoxLayout, QWidget, QSizePolicy
 from PySide6.QtCore import Qt, QSize
 
 from qfluentwidgets import MessageBoxBase, PushButton, PlainTextEdit
@@ -52,17 +52,20 @@ class EquationButton(PushButton):
         self.equation_text = equation_text
         self.display_text = ""
         self.parent = parent
+        self.clamp_factor = 40
 
         self.set_display_text()
         self.setCursor(Qt.PointingHandCursor)
         self.setFlat(True)
+        
+        # self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         self.clicked.connect(self.open_editor)
 
     def set_display_text(self):
         t = self.equation_text.replace("\n", "").strip()
         if t:
-            self.display_text = clamp_text(t, 40)
+            self.display_text = clamp_text(t, self.clamp_factor)
             self.setText(self.display_text)
 
     def set_equation(self, text: str):
