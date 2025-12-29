@@ -73,6 +73,8 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
                     partitions=settings.get('partition', 100),
                     algorithm=EvolutionType.NSGAII,
                 )
+                print(f"GOT: {res}")
+                print(f"TYPE: {type(res)}")
             case METHOD.NSGAIII:
                 if len(file.objectives) <= 1:
                     queue.put(["Error"])
@@ -362,6 +364,8 @@ class OptimizationPage(QWidget):
                 self.toggle.graph.plot(np.array([opt['data'].x]))
             case 'multi':
                 self.toggle.graph.plot(np.array(opt['data']['points']))
+            case 'NSGAII' | 'NSGAIII':
+                self.toggle.graph.plot(np.array(opt['data']['sols']))
             case _:
                 ...
 

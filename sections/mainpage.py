@@ -69,9 +69,7 @@ class MainPage(QWidget):
         self.do_strech()
     
     def do_strech(self):
-        if (self.doepage.showing or self.metapage.showing) and self.optpage.showing:
-            self.main.setStretch(0, 1)
-            self.main.setStretch(1, 1)
-        else:
-            self.main.setStretch(0, 0)
-            self.main.setStretch(1, 0)
+        self.top.setStretch(0, int(self.doepage.showing))
+        self.top.setStretch(2, int(self.metapage.showing))
+        self.main.setStretch(0, (self.doepage.showing or self.metapage.showing) and self.optpage.showing)
+        self.main.setStretch(1, (self.doepage.showing or self.metapage.showing) and self.optpage.showing)

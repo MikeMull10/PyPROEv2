@@ -1,5 +1,6 @@
-from PySide6.QtWidgets import QVBoxLayout, QWidget, QSizePolicy
+from PySide6.QtWidgets import QVBoxLayout, QWidget, QStyle, QStyleOptionButton
 from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QPainter
 
 from qfluentwidgets import MessageBoxBase, PushButton, PlainTextEdit
 
@@ -52,13 +53,11 @@ class EquationButton(PushButton):
         self.equation_text = equation_text
         self.display_text = ""
         self.parent = parent
-        self.clamp_factor = 40
+        self.clamp_factor = 80
 
         self.set_display_text()
         self.setCursor(Qt.PointingHandCursor)
         self.setFlat(True)
-        
-        # self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         self.clicked.connect(self.open_editor)
 

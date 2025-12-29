@@ -159,8 +159,7 @@ class FunctionItem(DefaultItem):
         self.name_box.setText(self.name)
         self.name_box.setFixedWidth(75)
         self.value_box = EquationButton("", parent)
-        self.value_box.equation_text = value
-        self.value_box.set_display_text()
+        self.value_box.set_equation(value)
 
         self.layout.addWidget(self.name_box)
         self.layout.addWidget(SubtitleLabel("="))

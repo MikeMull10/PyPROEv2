@@ -34,23 +34,26 @@ class Optimization:
             return "FAILED"
 
         results = self.data.get('data', None)
-        if not results or not self.fnc: return ""
+        if not results:# or not self.fnc:
+            return ""
 
         run_type = self.data.get('type', None)
 
-        ret = f"Optimization Statistics for {run_type}\n"
-        ret += f"-----------------------------------------------------------------\n\n"
+        ret = f"Optimization Statistics for {run_type.upper()}\n"
+        ret += f"{'-' * 64}\n\n"
 
         if run_type == 'single':
-            ret += f"Objective Function ({self.fnc.objectives[0].name}): \n"
+            ret += f"Objective Function: \n"
+            ret += f" - {self.fnc.objectives[0].name.upper()} ({self.fnc.objectives[0].text.upper()}): {results.fun}\n\n"
+            ret += f"Solution(s):\n"
+            ret += f"{'-' * 64}\n"
             for i, var in enumerate(self.fnc.variables):
                 ret += f" - {var.symbol}: {results.x[i]}\n"
-            ret += "\n"
         
         elif run_type == 'multi':
             ret += f"Objective Functions ({', '.join(obj.name for obj in self.fnc.objectives)}):\n"
 
-        ret += f"-----------------------------------------------------------------\n"
+        ret += f"{'-' * 64}\n"
         ret += f"Job completed successfully\n"
         ret += f"=================================\n"
 

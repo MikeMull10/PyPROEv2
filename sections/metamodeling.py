@@ -1,14 +1,16 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt
 
 from components.clickabletitle import ClickableTitleLabel
 from components.polyreg import PolyTypes, poly_lookup
 from components.doetable import DOETable
-from components.formsections import FunctionsSection, FunctionItem
+from components.formsections import FunctionsSection, FunctionItem, VariablesSection
 from components.rbf import RBFType, generate_rbf
 from sections.designofexperiments import make_row
+from sections.formulation import ResetIcon
+from testing.fnc_objects import Variable, Function
 
-from qfluentwidgets import ComboBox, PrimaryPushButton
+from qfluentwidgets import ComboBox, PrimaryPushButton, ToolButton, PrimaryToolButton, FluentIcon as FI
 
 from pprint import pprint as pp
 
@@ -67,6 +69,14 @@ class MetamodelPage(QWidget):
         results_layout = QVBoxLayout(self.results)
         self.functions_section = FunctionsSection(parent=parent, clickable_title=True)
         self.functions_section.add_btn.deleteLater()
+        self.functions_section.reset_btn = ToolButton(ResetIcon())
+        self.functions_section.next_btn  = PrimaryToolButton(FI.RIGHT_ARROW)
+        self.functions_section.reset_btn.setCursor(Qt.PointingHandCursor)
+        self.functions_section.next_btn .setCursor(Qt.PointingHandCursor)
+        self.functions_section.top_bar.addWidget(self.functions_section.reset_btn)
+        self.functions_section.top_bar.addWidget(self.functions_section.next_btn)
+        self.functions_section.reset_btn.clicked.connect(self.functions_section.clear)
+        self.functions_section.next_btn.clicked.connect(self.send_to_optimization)
 
         results_layout.addWidget(self.functions_section)
         results_layout.addStretch()
@@ -75,7 +85,6 @@ class MetamodelPage(QWidget):
         layout.setStretch(0, 0)
         layout.setStretch(1, 1)
         self.update_function_options()
-        self.resize_function_btns()
     
     def update_function_options(self):
         self.function_type.clear()
@@ -102,6 +111,15 @@ class MetamodelPage(QWidget):
         
         else:                 # Radial Basis Function
             self.do_rbf()
+        
+        # --- Remove Buttons & Update Clamp Factor ---
+        for i in range(self.functions_section.row_container.count()):
+            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
+            item.value_box.clamp_factor = 65
+            item.value_box.set_display_text()
+            if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
+            if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
+            if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
     
     def do_poly_reg(self):
         poly_type = PolyTypes(self.function_type.currentIndex())
@@ -124,15 +142,6 @@ class MetamodelPage(QWidget):
         results = func(independent_vars, dependent_vars, var_names)
         for i, res in enumerate(results, start=1):
             self.functions_section.add_row(name=f"F{i}", value=res)
-        
-        # --- Remove Buttons ---
-        for i in range(self.functions_section.row_container.count()):
-            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
-            if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
-            if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
-            if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
-        
-        self.resize_function_btns()
 
     def do_rbf(self):
         rbf = RBFType(self.function_type.currentIndex())
@@ -150,24 +159,16 @@ class MetamodelPage(QWidget):
         # --- Populate Functions ---
         for i in range(dependent_vars.shape[1]):
             self.functions_section.add_row(name=f"F{i + 1}", value=generate_rbf(independent_vars, dependent_vars[:, i], rbf, epsilon=1.0, variable_names=var_names))
-        
-        # --- Remove Buttons ---
-        for i in range(self.functions_section.row_container.count()):
-            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
-            if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
-            if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
-            if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
     
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.resize_function_btns()
-    
-    def resize_function_btns(self):
-        size: QSize = self.functions_section.size()
-        width = size.width()
-        print(width, width // 8)
+    def send_to_optimization(self):
+        vars = self.parent.doe.table.variables
 
+        var_section: VariablesSection = self.parent.frm.var_section
+        v: Variable
+        for v in vars:
+            var_section.add_row(v.min, v.max, v.symbol)
+
+        fnc_section: FunctionsSection = self.parent.frm.fnc_section
         for i in range(self.functions_section.row_container.count()):
             item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
-            item.value_box.clamp_factor = width // 8
-            item.value_box.set_display_text()
+            fnc_section.add_row(item.name_box.text(), item.value_box.equation_text)

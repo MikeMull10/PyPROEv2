@@ -8,7 +8,7 @@ from pymoo.util.ref_dirs import get_reference_directions
 from pymoo.operators.crossover.sbx import SBX
 from pymoo.operators.mutation.pm import PM
 from pymoo.problems.functional import FunctionalProblem
-from pymoo.optimize import minimize
+from pymoo.optimize import minimize as pyminimize
 
 from scipy.optimize import NonlinearConstraint, minimize, OptimizeResult
 from scipy.stats.qmc import LatinHypercube
@@ -240,17 +240,20 @@ class Optimize:
             algo = NSGA3(pop_size=population, crossover=cross, mutation=poly_mut, ref_dirs=ref_dirs)
             results["n_parts"] = partitions
         else:
-            return Exception("Invalid algorithm. Please choose either NSGAII or NSGAIII.")
+            raise Exception("Invalid algorithm. Please choose either NSGAII or NSGAIII.")
 
         t = perf_counter()
-        res = minimize(
+        res = pyminimize(
             problem,
             algo,
             ('n_gen', generations),
             seed=seed,
             verbose=False,
         )
-        duration = t - perf_counter()
+        duration = perf_counter() - t
+
+        if res.F is None or len(res.F) == 0:
+            return Optimization(Opt.FAILED, {'error': 'No solutions found.'})
 
         results["sols"] = res.F
         results["time"] = duration
