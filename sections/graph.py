@@ -1,11 +1,12 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QPushButton, QTextEdit, QDialog, QLabel
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QDialog, QLabel
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont, QFontDatabase
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from qfluentwidgets import TextEdit, PushButton
+from qfluentwidgets import TextEdit, PushButton, Theme, theme
 
 
 class MplWidget(FigureCanvasQTAgg):
@@ -25,6 +26,11 @@ class MplWidget(FigureCanvasQTAgg):
         self.points = points
         self.axes.scatter(*[points[:, i] for i in range(len(points[0]))])
 
+    def clear(self):
+        self.points = []
+        self.axes.clear()
+        self.draw_idle()
+
 class ToggleWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -32,6 +38,10 @@ class ToggleWidget(QWidget):
 
         self.text_edit = TextEdit()
         self.text_edit.setPlaceholderText("Results...")
+        self.text_edit.setAcceptRichText(False)
+
+        font = QFontDatabase.systemFont(QFontDatabase.FixedFont)
+        self.text_edit.setFont(font)
 
         self.graph = MplWidget()
 
@@ -74,18 +84,20 @@ class ToggleWidget(QWidget):
     def show_text_popup(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Edit Text")
-        dialog.resize(800, 600)
+        dialog.resize(1200, 800)
+        dialog.setStyleSheet(f"QDialog {{background-color: #{'202020' if theme() == Theme.DARK else 'f0f4f9'};}}")
+
         layout = QVBoxLayout(dialog)
 
         editor = TextEdit()
-        editor.setPlainText(self.text_edit.toPlainText())  # copy current text
+        editor.setPlainText(self.text_edit.toPlainText())
         layout.addWidget(editor)
 
         save_btn = PushButton("Close")
         layout.addWidget(save_btn)
 
         def save_and_close():
-            self.text_edit.setPlainText(editor.toPlainText())  # push changes back
+            self.text_edit.setPlainText(editor.toPlainText())
             dialog.accept()
 
         save_btn.clicked.connect(save_and_close)
@@ -95,6 +107,8 @@ class ToggleWidget(QWidget):
     def show_graph_popup(self):
         dialog = QDialog()
         dialog.setWindowTitle("Optimization Results Graph")
+        dialog.resize(1200, 800)
+        # dialog.setStyleSheet(f"QDialog {{background-color: #{'202020' if theme() == Theme.DARK else 'f0f4f9'};}}")
         layout = QVBoxLayout()
 
         graphWidget = MplWidget(self, width=5, height=4, dpi=100)
@@ -127,3 +141,7 @@ class ToggleWidget(QWidget):
         dialog.setLayout(layout)
 
         dialog.exec()
+    
+    def clear(self):
+        self.text_edit.clear()
+        self.graph.clear()

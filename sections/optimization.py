@@ -73,8 +73,6 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
                     partitions=settings.get('partition', 100),
                     algorithm=EvolutionType.NSGAII,
                 )
-                print(f"GOT: {res}")
-                print(f"TYPE: {type(res)}")
             case METHOD.NSGAIII:
                 if len(file.objectives) <= 1:
                     queue.put(["Error"])
@@ -97,27 +95,6 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
     
     ### --- GimOPT ---
     # TODO: Implement GimOPT :)
-
-def clear_layout(layout: QLayout):
-    if layout is None:
-        return
-    while layout.count():
-        item = layout.takeAt(0)
-
-        w = item.widget()
-        if w is not None:
-            w.setParent(None)
-            w.deleteLater()
-            continue
-
-        child = item.layout()
-        if child is not None:
-            clear_layout(child)
-            child.setParent(None)
-            child.deleteLater()
-
-    layout.invalidate()
-    QApplication.processEvents()
 
 class NoTrailingZerosSpinBox(DoubleSpinBox):
     def textFromValue(self, value: float) -> str:
@@ -272,6 +249,7 @@ class OptimizationPage(QWidget):
 
         self.toggle = ToggleWidget()
         self.results.addWidget(self.toggle)
+        self.clear.clicked.connect(self.toggle.clear)
 
         main.addLayout(opt_wrapper)
         self.layout.addWidget(self.results_widget)

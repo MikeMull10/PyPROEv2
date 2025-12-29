@@ -135,7 +135,7 @@ class Optimize:
         if len(input.objectives) == 0:
             return Optimization(Opt.FAILED, "No objective function.")
         elif len(input.objectives) == 1:
-            return Optimization(Opt.FAILED, f"Not enough objective functions. Have 1 expected >1")
+            return Optimization(Opt.FAILED, f"Not enough objective functions. Have 1 expected >1 ({len(input.objectives)}).")
         
         len_objectives = len(input.objectives)
         constraints = input.get_nonlinear_constraints()

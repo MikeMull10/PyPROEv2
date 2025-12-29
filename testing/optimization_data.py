@@ -1,5 +1,6 @@
 from enum import Enum
 from testing.inputfnc2 import InputFile
+import numpy as np
 
 class Opt(Enum):
     FAILED  = 0
@@ -34,26 +35,33 @@ class Optimization:
             return "FAILED"
 
         results = self.data.get('data', None)
-        if not results:# or not self.fnc:
-            return ""
+        if not results or not self.fnc: return ""
 
         run_type = self.data.get('type', None)
 
         ret = f"Optimization Statistics for {run_type.upper()}\n"
-        ret += f"{'-' * 64}\n\n"
+        ret += f"{'—' * 64}\n\n"
 
         if run_type == 'single':
             ret += f"Objective Function: \n"
             ret += f" - {self.fnc.objectives[0].name.upper()} ({self.fnc.objectives[0].text.upper()}): {results.fun}\n\n"
             ret += f"Solution(s):\n"
-            ret += f"{'-' * 64}\n"
+            ret += f"{'—' * 64}\n"
             for i, var in enumerate(self.fnc.variables):
                 ret += f" - {var.symbol}: {results.x[i]}\n"
         
         elif run_type == 'multi':
             ret += f"Objective Functions ({', '.join(obj.name for obj in self.fnc.objectives)}):\n"
 
-        ret += f"{'-' * 64}\n"
+            points = np.array(results['points'])
+            precision = max(len(str(x)) for x in points.flat) + 1
+            for i, point in enumerate(points):
+                ret += '\t'.join([f"{p:<{precision}}" for p in point]) + '\n'
+        else:
+            ret += f"Objective Functions ({', '.join(obj.name for obj in self.fnc.objectives)}):\n"
+
+
+        ret += f"{'—' * 64}\n"
         ret += f"Job completed successfully\n"
         ret += f"=================================\n"
 

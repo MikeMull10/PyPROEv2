@@ -62,6 +62,7 @@ class EquationButton(PushButton):
         self.clicked.connect(self.open_editor)
 
     def set_display_text(self):
+        self.setToolTip(self.equation_text)
         t = self.equation_text.replace("\n", "").strip()
         if t:
             self.display_text = clamp_text(t, self.clamp_factor)

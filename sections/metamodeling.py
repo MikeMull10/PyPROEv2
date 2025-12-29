@@ -8,9 +8,9 @@ from components.formsections import FunctionsSection, FunctionItem, VariablesSec
 from components.rbf import RBFType, generate_rbf
 from sections.designofexperiments import make_row
 from sections.formulation import ResetIcon
-from testing.fnc_objects import Variable, Function
+from testing.fnc_objects import Variable
 
-from qfluentwidgets import ComboBox, PrimaryPushButton, ToolButton, PrimaryToolButton, FluentIcon as FI
+from qfluentwidgets import ComboBox, PrimaryPushButton, ToolButton, PrimaryToolButton, SmoothScrollArea, FluentIcon as FI
 
 from pprint import pprint as pp
 
@@ -67,6 +67,13 @@ class MetamodelPage(QWidget):
 
         self.results = QWidget()
         results_layout = QVBoxLayout(self.results)
+
+        scroll = SmoothScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setMaximumHeight(1e5)
+        scroll.setStyleSheet("QScrollArea{background: transparent; border: none}")
+        results_layout.addWidget(scroll)
+
         self.functions_section = FunctionsSection(parent=parent, clickable_title=True)
         self.functions_section.add_btn.deleteLater()
         self.functions_section.reset_btn = ToolButton(ResetIcon())
@@ -78,8 +85,10 @@ class MetamodelPage(QWidget):
         self.functions_section.reset_btn.clicked.connect(self.functions_section.clear)
         self.functions_section.next_btn.clicked.connect(self.send_to_optimization)
 
-        results_layout.addWidget(self.functions_section)
-        results_layout.addStretch()
+        self.functions_section.setStyleSheet("QWidget{background: transparent}")
+        scroll.setWidget(self.functions_section)
+        scroll.setAlignment(Qt.AlignTop)
+        self.functions_section.main_layout.setAlignment(Qt.AlignTop)
         layout.addWidget(self.results)
 
         layout.setStretch(0, 0)
@@ -117,9 +126,20 @@ class MetamodelPage(QWidget):
             item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
             item.value_box.clamp_factor = 65
             item.value_box.set_display_text()
-            if hasattr(item, "up_arrow"): item.up_arrow.deleteLater()
-            if hasattr(item, "down_arrow"): item.down_arrow.deleteLater()
-            if hasattr(item, "remove_btn"): item.remove_btn.deleteLater()
+            if hasattr(item, "up_arrow") and item.up_arrow is not None:
+                item.up_arrow.setParent(None)
+                item.up_arrow.deleteLater()
+                item.up_arrow = None
+
+            if hasattr(item, "down_arrow") and item.down_arrow is not None:
+                item.down_arrow.setParent(None)
+                item.down_arrow.deleteLater()
+                item.down_arrow = None
+
+            if hasattr(item, "remove_btn") and item.remove_btn is not None:
+                item.remove_btn.setParent(None)
+                item.remove_btn.deleteLater()
+                item.remove_btn = None
     
     def do_poly_reg(self):
         poly_type = PolyTypes(self.function_type.currentIndex())
