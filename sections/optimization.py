@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy, QLayout, QApplication
+    QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy
 )
 from PySide6.QtCore import Qt, QTimer
 
@@ -41,16 +41,8 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
     if method_type == METHOD_TYPE.SciPy:
         match method:
             case METHOD.Single:
-                if len(file.objectives) > 1:
-                    queue.put(["You are a dumbass"])
-                    return
-
                 res = Opt.single(file, grid_size=settings.get('gridsize', 5), tolerance=settings.get('tolerance', 1e-20))
             case METHOD.Multi:
-                if len(file.objectives) <= 1:
-                    queue.put(["You are a dumbass"])
-                    return
-                
                 res = Opt.multi(
                     input=file,
                     min_weight=settings.get('min_weight', 0.01),
@@ -60,10 +52,6 @@ def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, setti
                     ftol=settings.get('ftol', 1e-20)
                 )
             case METHOD.NSGAII:
-                if len(file.objectives) <= 1:
-                    queue.put(["Error"])
-                    return
-
                 res = Opt.evolve(
                     file,
                     generations=settings.get('generations', 1000),
@@ -329,6 +317,7 @@ class OptimizationPage(QWidget):
     
     def handle_finish(self, opt: OptObj):
         if opt.status == OptStatus.FAILED:
+            self.toggle.text_edit.setText(f"ERROR: {opt.data}")
             return
 
         if opt['type'] == 'single':

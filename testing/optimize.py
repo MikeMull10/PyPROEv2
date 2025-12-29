@@ -76,7 +76,7 @@ class Optimize:
         if len(input.objectives) == 0:
             return Optimization(Opt.FAILED, "No objective function.")
         elif len(input.objectives) > 1:
-            return Optimization(Opt.FAILED, f"Too many objective functions. Have {len(input.objectives)} expected 1")
+            return Optimization(Opt.FAILED, f"Too many objective functions. Have {len(input.objectives)} expected 1.")
 
         constraints: list[NonlinearConstraint] = input.get_nonlinear_constraints()
 
