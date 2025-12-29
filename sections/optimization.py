@@ -2,6 +2,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy
 )
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QColor
 
 from qfluentwidgets import SpinBox, DoubleSpinBox, ComboBox, PushButton, PrimaryPushButton
 
@@ -22,64 +23,59 @@ import numpy as np
 
 from enum import Enum
 
-class METHOD_TYPE(Enum):
-    SciPy  = 0
-    GimOPT = 1
-
 class METHOD(Enum):
     Single  = 0
     Multi   = 1
     NSGAII  = 2
     NSGAIII = 3
 
-def run(queue: Queue, method_type: METHOD_TYPE, method: METHOD, file: str, settings: dict):
+def run(queue: Queue, method: METHOD, file: str, settings: dict):
     file_str = file
     file: InputFile = InputFile(file, is_file=False)
 
     res = None
     ### --- SciPy ---
-    if method_type == METHOD_TYPE.SciPy:
-        match method:
-            case METHOD.Single:
-                res = Opt.single(file, grid_size=settings.get('gridsize', 5), tolerance=settings.get('tolerance', 1e-20))
-            case METHOD.Multi:
-                res = Opt.multi(
-                    input=file,
-                    min_weight=settings.get('min_weight', 0.01),
-                    increment=settings.get('increment', 0.01),
-                    grid_size=settings.get('gridsize', 5),
-                    tolerance=settings.get('tolerance', 1e-20),
-                    ftol=settings.get('ftol', 1e-20)
-                )
-            case METHOD.NSGAII:
-                res = Opt.evolve(
-                    file,
-                    generations=settings.get('generations', 1000),
-                    population=settings.get('population', 200),
-                    crossover_rate=settings.get('crossover', 0.9),
-                    mutation_rate=settings.get('mutation', 0.01),
-                    partitions=settings.get('partition', 100),
-                    algorithm=EvolutionType.NSGAII,
-                )
-            case METHOD.NSGAIII:
-                if len(file.objectives) <= 1:
-                    queue.put(["Error"])
-                    return
+    match method:
+        case METHOD.Single:
+            res = Opt.single(file, grid_size=settings.get('gridsize', 5), tolerance=settings.get('tolerance', 1e-20))
+        case METHOD.Multi:
+            res = Opt.multi(
+                input=file,
+                min_weight=settings.get('min_weight', 0.01),
+                increment=settings.get('increment', 0.01),
+                grid_size=settings.get('gridsize', 5),
+                tolerance=settings.get('tolerance', 1e-20),
+                ftol=settings.get('ftol', 1e-20)
+            )
+        case METHOD.NSGAII:
+            res = Opt.evolve(
+                file,
+                generations=settings.get('generations', 1000),
+                population=settings.get('population', 200),
+                crossover_rate=settings.get('crossover', 0.9),
+                mutation_rate=settings.get('mutation', 0.01),
+                partitions=settings.get('partition', 100),
+                algorithm=EvolutionType.NSGAII,
+            )
+        case METHOD.NSGAIII:
+            if len(file.objectives) <= 1:
+                queue.put(["Error"])
+                return
 
-                res = Opt.evolve(
-                    file,
-                    generations=settings.get('generations', 1000),
-                    population=settings.get('population', 200),
-                    crossover_rate=settings.get('crossover', 0.9),
-                    mutation_rate=settings.get('mutation', 0.01),
-                    partitions=settings.get('partition', 100),
-                    algorithm=EvolutionType.NSGAIII,
-                )
-        
-        if res:
-            res.fnc = file_str
-        queue.put([res])
-        return
+            res = Opt.evolve(
+                file,
+                generations=settings.get('generations', 1000),
+                population=settings.get('population', 200),
+                crossover_rate=settings.get('crossover', 0.9),
+                mutation_rate=settings.get('mutation', 0.01),
+                partitions=settings.get('partition', 100),
+                algorithm=EvolutionType.NSGAIII,
+            )
+    
+    if res:
+        res.fnc = file_str
+    queue.put([res])
+    return
     
     ### --- GimOPT ---
     # TODO: Implement GimOPT :)
@@ -112,17 +108,11 @@ class OptimizationPage(QWidget):
         opt_wrapper.addWidget(self.options_section_widget)
         self.layout = QVBoxLayout(self.options_section_widget)
 
-        # --- Solver Type Row ---
-        self.solver_type = ComboBox()
-        self.solver_type.addItems(["SciPy", "GimOPT"])
-        self.solver_type_row = make_row("Solver:", self.solver_type)
-        self.layout.addWidget(self.solver_type_row)
-
         # --- Solver Row ---
         self.solver = ComboBox()
-        self.solver.addItems(["Single", "Multi", "NSGAII", "NSGAIII"])
+        self.solver.addItems(["SLSQP", "SLSQP + WSF", "NSGAII", "NSGAIII"])
         self.solver.currentTextChanged.connect(self._rebuild)
-        self.solver_row = make_row("Solver Type:", self.solver)
+        self.solver_row = make_row("Solver:", self.solver)
         self.layout.addWidget(self.solver_row)
 
         ### --- Solver Options ---
@@ -228,7 +218,6 @@ class OptimizationPage(QWidget):
         self.btns_layout.addWidget(self.start)
         self.btns_layout.addWidget(self.stop)
         self.btns_layout.addWidget(self.clear)
-        self.layout.addStretch()  # push buttons to bottom
         self.layout.addLayout(self.btns_layout)
 
         self.results_widget = QWidget()
@@ -254,15 +243,15 @@ class OptimizationPage(QWidget):
         self.timer.timeout.connect(self._check_process)
 
     def _rebuild(self):
-        text = self.solver.currentText()
-        self.gridsize_row.setVisible(text in ["Single", "Multi"])
-        self.weight_min_row.setVisible(text == "Multi")
-        self.weight_increment_row.setVisible(text == "Multi")
-        self.iterations_row.setVisible(text in ["NSGAII", "NSGAIII"])
-        self.population_row.setVisible(text == "NSGAII")
-        self.crossover_row.setVisible(text in ["NSGAII", "NSGAIII"])
-        self.mutation_row.setVisible(text in ["NSGAII", "NSGAIII"])
-        self.partitions_row.setVisible(text == "NSGAIII")
+        index = self.solver.currentIndex()
+        self.gridsize_row.setVisible(index <= 1)
+        self.weight_min_row.setVisible(index == 1)
+        self.weight_increment_row.setVisible(index == 1)
+        self.iterations_row.setVisible(index >= 2)
+        self.population_row.setVisible(index == 2)
+        self.crossover_row.setVisible(index >= 2)
+        self.mutation_row.setVisible(index >= 2)
+        self.partitions_row.setVisible(index == 3)
     
     def _solve(self, input: str):
         settings = {
@@ -276,8 +265,7 @@ class OptimizationPage(QWidget):
             'partitions': self.partitions.value(),
         }
 
-        self.process = Process(target=run, args=(self.queue, 
-                                                 METHOD_TYPE.SciPy, 
+        self.process = Process(target=run, args=(self.queue,
                                                  METHOD(self.solver.currentIndex()),
                                                  input,
                                                  settings))
@@ -345,6 +333,8 @@ class OptimizationPage(QWidget):
         if self.showing:
             self.options_section_widget.show()
             self.formpage.show()
+            self.section_title.setTextColor(QColor(0, 0, 0), QColor(255, 255, 255))
         else:
             self.options_section_widget.hide()
             self.formpage.hide()
+            self.section_title.setTextColor(QColor(90, 90, 90), QColor(221, 221, 221))

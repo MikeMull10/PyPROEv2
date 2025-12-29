@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 from enum import Enum
+import re
 
 class RBFType(Enum):
     LINEAR = 0
@@ -68,7 +69,7 @@ def rbf_kernel(r, kernel: RBFType, epsilon=1.0):
 def needs_polynomial(kernel: RBFType):
     """Check if kernel requires polynomial augmentation."""
     # Conditionally positive definite kernels need polynomial terms
-    return kernel in (RBFType.THIN_PLATE_SPLINE, RBFType.LINEAR, RBFType.CUBIC)
+    return 1 if kernel in (RBFType.THIN_PLATE_SPLINE, RBFType.LINEAR, RBFType.CUBIC) else None
 
 def build_polynomial_matrix(X, degree=1):
     """Build polynomial basis matrix for given points."""
@@ -84,7 +85,7 @@ def build_polynomial_matrix(X, degree=1):
     else:
         raise NotImplementedError(f"Polynomial degree {degree} not implemented")
 
-def fit_rbf(X, y, kernel: RBFType, epsilon=1.0, smooth=0.0, use_polynomial=None):
+def fit_rbf(X: np.ndarray, y: np.ndarray, kernel: RBFType, epsilon: float=1.0, smooth: float=0.0, poly_order: int | None=None):
     """
     Fit RBF interpolation to data.
     
@@ -100,7 +101,7 @@ def fit_rbf(X, y, kernel: RBFType, epsilon=1.0, smooth=0.0, use_polynomial=None)
         Shape parameter for the kernel
     smooth : float
         Smoothing/regularization parameter (0 = exact interpolation)
-    use_polynomial : bool or None
+    poly_order : int or None
         Whether to include polynomial terms. If None, automatically determined.
     
     Returns:
@@ -112,47 +113,45 @@ def fit_rbf(X, y, kernel: RBFType, epsilon=1.0, smooth=0.0, use_polynomial=None)
     y = np.asarray(y)
     n = len(X)
     
-    # Determine if polynomial terms are needed
-    if use_polynomial is None:
-        use_polynomial = needs_polynomial(kernel)
-    
+    if poly_order is None:
+        poly_order = needs_polynomial(kernel)  # must return int or None
+
     # Build kernel matrix
     D = cdist(X, X)
     K = rbf_kernel(D, kernel, epsilon)
-    
-    if not use_polynomial:
-        # Simple case: no polynomial terms
+
+    # ---- NO polynomial terms ----
+    if poly_order is None:
         if smooth > 0:
             K += np.eye(n) * smooth
         rbf_weights = np.linalg.solve(K, y)
-        return {'rbf_weights': rbf_weights, 'poly_weights': None, 'centers': X}
-    
-    else:
-        # Augmented system with polynomial terms
-        P = build_polynomial_matrix(X, degree=1)
-        m = P.shape[1]
-        
-        # Build augmented system: [K P; P^T 0] [w; c] = [y; 0]
-        A = np.zeros((n + m, n + m))
-        A[:n, :n] = K
-        if smooth > 0:
-            A[:n, :n] += np.eye(n) * smooth
-        A[:n, n:] = P
-        A[n:, :n] = P.T
-        
-        b = np.zeros(n + m)
-        b[:n] = y
-        
-        # Solve augmented system
-        solution = np.linalg.solve(A, b)
-        rbf_weights = solution[:n]
-        poly_weights = solution[n:]
-        
         return {
             'rbf_weights': rbf_weights,
-            'poly_weights': poly_weights,
+            'poly_weights': None,
             'centers': X
         }
+
+    # ---- WITH polynomial terms ----
+    P = build_polynomial_matrix(X, degree=poly_order)
+    m = P.shape[1]
+
+    A = np.zeros((n + m, n + m))
+    A[:n, :n] = K
+    if smooth > 0:
+        A[:n, :n] += np.eye(n) * smooth
+    A[:n, n:] = P
+    A[n:, :n] = P.T
+
+    b = np.zeros(n + m)
+    b[:n] = y
+
+    solution = np.linalg.solve(A, b)
+
+    return {
+        'rbf_weights': solution[:n],
+        'poly_weights': solution[n:],
+        'centers': X
+    }
 
 def eval_rbf(X_eval, weights_dict, kernel: RBFType, epsilon=1.0):
     """
@@ -251,14 +250,15 @@ def rbf_equation_str(weights_dict, kernel: RBFType, epsilon=1.0):
     if poly_weights is not None:
         n_dim = centers.shape[1]
         terms.append(f"{poly_weights[0]:.15g}")  # constant
-        for i in range(n_dim):
-            terms.append(f"{poly_weights[i+1]:.15g} * x{i+1}")
+
+        # Add linear terms only if they exist
+        for i in range(1, len(poly_weights)):
+            terms.append(f"{poly_weights[i]:.15g} * x{i}")
     
     return f"\n{' ' * 3} + ".join(terms)
 
-def generate_rbf(X: np.array, y: np.array, rbf_type: RBFType, epsilon: float, smooth: float=0.0, variable_names=None):
-    import re
-    weights = fit_rbf(X, y, rbf_type, epsilon=epsilon, smooth=smooth)
+def generate_rbf(X: np.array, y: np.array, rbf_type: RBFType, epsilon: float, poly_order: int=0, smooth: float=0.0, variable_names=None):
+    weights = fit_rbf(X, y, rbf_type, epsilon=epsilon, smooth=smooth, poly_order=poly_order)
     equation = rbf_equation_str(weights, rbf_type, epsilon)
     
     # Replace variable names if custom names provided

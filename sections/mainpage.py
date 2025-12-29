@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QColor
 
 from components.clickabletitle import ClickableTitleLabel
 from sections.designofexperiments import DesignOfExperimentsPage
@@ -27,6 +27,8 @@ class MainPage(QWidget):
         self.meta_title = ClickableTitleLabel("Metamodeling")
         self.meta_title.setVisible(False)
         self.meta_title.clicked.connect(self.metapage.toggle_collapse)
+        self.doe_title.setTextColor(QColor(90, 90, 90), QColor(221, 221, 221))
+        self.meta_title.setTextColor(QColor(90, 90, 90), QColor(221, 221, 221))
     
 
         self.top = QHBoxLayout()
@@ -47,7 +49,6 @@ class MainPage(QWidget):
         self.top.addLayout(self.layout_b)
 
         self.bottom.addWidget(self.optpage)
-        # self.bottom.addWidget(self.formpage)
         
         self.top.setContentsMargins(0, 0, 0, 0)
         self.bottom.setContentsMargins(0, 0, 0, 0)
@@ -73,3 +74,4 @@ class MainPage(QWidget):
         self.top.setStretch(2, int(self.metapage.showing))
         self.main.setStretch(0, (self.doepage.showing or self.metapage.showing) and self.optpage.showing)
         self.main.setStretch(1, (self.doepage.showing or self.metapage.showing) and self.optpage.showing)
+        self.top.setContentsMargins(0, 0, 0, 24 * (not((self.doepage.showing or self.metapage.showing) and self.optpage.showing)))

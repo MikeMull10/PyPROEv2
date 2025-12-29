@@ -12,8 +12,6 @@ from testing.fnc_objects import Variable
 
 from qfluentwidgets import ComboBox, PrimaryPushButton, ToolButton, PrimaryToolButton, SmoothScrollArea, FluentIcon as FI
 
-from pprint import pprint as pp
-
 class MetamodelPage(QWidget):
     def __init__(self, doe_table: DOETable=None, parent=None):
         super().__init__()
@@ -58,9 +56,10 @@ class MetamodelPage(QWidget):
         options_section.addWidget(self.poly_order_row)
         options_section.addSpacing(5)
 
-        self.calculate_btn = PrimaryPushButton("Calculate")
+        self.calculate_btn = PrimaryPushButton("Generate")
         self.calculate_btn.setCursor(Qt.PointingHandCursor)
         self.calculate_btn.clicked.connect(self.calculate)
+        self.calculate_btn.setToolTip("Generate functions based on the Design of Experiments matrix.")
         options_section.addWidget(self.calculate_btn)
 
         options_section.addStretch()
@@ -84,6 +83,8 @@ class MetamodelPage(QWidget):
         self.functions_section.top_bar.addWidget(self.functions_section.next_btn)
         self.functions_section.reset_btn.clicked.connect(self.functions_section.clear)
         self.functions_section.next_btn.clicked.connect(self.send_to_optimization)
+        self.functions_section.reset_btn.setToolTip("Clear the functions.")
+        self.functions_section.next_btn.setToolTip("Send functions to Formulation section.")
 
         self.functions_section.setStyleSheet("QWidget{background: transparent}")
         scroll.setWidget(self.functions_section)
@@ -178,7 +179,7 @@ class MetamodelPage(QWidget):
 
         # --- Populate Functions ---
         for i in range(dependent_vars.shape[1]):
-            self.functions_section.add_row(name=f"F{i + 1}", value=generate_rbf(independent_vars, dependent_vars[:, i], rbf, epsilon=1.0, variable_names=var_names))
+            self.functions_section.add_row(name=f"F{i + 1}", value=generate_rbf(independent_vars, dependent_vars[:, i], rbf, epsilon=1.0, poly_order=self.poly_order.currentIndex(), variable_names=var_names))
     
     def send_to_optimization(self):
         vars = self.parent.doe.table.variables
