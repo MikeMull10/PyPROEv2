@@ -28,28 +28,21 @@ class MplWidget(FigureCanvasQTAgg):
 class ToggleWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        # stacked widget
         self.stack = QStackedWidget()
 
-        # text widget
         self.text_edit = TextEdit()
         self.text_edit.setPlaceholderText("Results...")
 
-        # graph widget
         self.graph = MplWidget()
 
-        # add both to stack
         self.stack.addWidget(self.text_edit)  # index 0
         self.stack.addWidget(self.graph)      # index 1
 
         self.btns = QHBoxLayout()
 
-        # toggle button
         self.toggle_btn = PushButton("Toggle View")
         self.toggle_btn.clicked.connect(self.toggle_view)
 
-        # popout button
         self.popout_btn = PushButton("View in Fullscreen")
         self.popout_btn.clicked.connect(self.create_popout)
 
@@ -59,16 +52,13 @@ class ToggleWidget(QWidget):
         self.btns.addWidget(self.toggle_btn)
         self.btns.addWidget(self.popout_btn)
 
-        # layout
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.stack)
-        # layout.addStretch()
         layout.addLayout(self.btns)
 
         self.setLayout(layout)
 
-        # start with text
         self.stack.setCurrentIndex(0)
 
     def toggle_view(self):

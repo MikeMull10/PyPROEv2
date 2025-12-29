@@ -268,6 +268,7 @@ class OptimizationPage(QWidget):
 
         self.results_widget = QWidget()
         self.results = QVBoxLayout(self.results_widget)
+        self.results.setContentsMargins(0, 10, 0, 0)
 
         self.toggle = ToggleWidget()
         self.results.addWidget(self.toggle)
