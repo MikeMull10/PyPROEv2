@@ -1,7 +1,5 @@
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout
-)
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
+from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 from qfluentwidgets import theme, Theme, SmoothScrollArea, SubtitleLabel, FluentIconBase, ToolButton, FluentIcon as FI
 

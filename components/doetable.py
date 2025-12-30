@@ -1,7 +1,7 @@
-from PySide6.QtWidgets import QTableWidgetItem, QAbstractItemView, QApplication, QWidget, QHBoxLayout, QSizePolicy, QHeaderView
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QTableWidgetItem, QAbstractItemView, QApplication, QWidget, QHBoxLayout
 from PySide6.QtGui import QKeySequence, QColor
 
+from components.basicpopup import BasicPopup
 from testing.fnc_objects import Variable, Function
 
 from qfluentwidgets import TableWidget, themeColor, theme, Theme, ToolButton, FluentIcon as FI
@@ -10,7 +10,8 @@ import numpy as np
 
 class DOETable(TableWidget):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__(None)
+        self.parent = parent
 
         self.setBorderVisible(True)
         self.setBorderRadius(8)
@@ -178,7 +179,9 @@ class DOETable(TableWidget):
             try:
                 x.append(float(self.item(index, i).text()))
             except ValueError:
-               raise ValueError(f"Error converting a variable to a float at ROW {index}, COL {i}, VALUE {self.item(index, i).text()}.")
+               pop = BasicPopup(parent=self.parent, title="ERROR", message=f"Error converting a variable to a float at ROW: {index}, COL: {i} with VALUE: {self.item(index, i).text()}.")
+               pop.exec()
+               return
         
         for i, func in enumerate(self.functions):
             cell = self.item(index, end + i)
@@ -256,7 +259,9 @@ class DOETable(TableWidget):
                 try:
                     row.append(float(self.item(i, ii).text()))
                 except ValueError:
-                    raise ValueError(f"Error converting a variable to a float at ROW {i}, COL {i}, VALUE {self.item(i, ii).text()}.")
+                    pop = BasicPopup(parent=self.parent, title="ERROR", message=f"Error converting a variable to a float at ROW: {i}, COL: {i} with VALUE: {self.item(i, ii).text()}.")
+                    pop.exec()
+                    return
                 
             data.append(row)
 

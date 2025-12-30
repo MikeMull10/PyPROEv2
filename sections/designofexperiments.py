@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt
 
+from components.basicpopup import BasicPopup
 from components.doetable import DOETable
 from components.clickabletitle import ClickableTitleLabel
 from components.designpopup import DesignPopup
@@ -131,7 +132,7 @@ class DesignOfExperimentsPage(QWidget):
 
         options_section.addStretch()
         
-        self.table = DOETable()
+        self.table = DOETable(parent=self.parent)
         layout.addWidget(self.table)
 
         layout.setStretch(0, 3)
@@ -220,7 +221,12 @@ class DesignOfExperimentsPage(QWidget):
                 points = scale_to_bounds(ccd_points, [v.min for v in variables], [v.max for v in variables])
             
             case MethodType.TAGUCHI:
-                toa_points = get_oa(len(variables), int(self.levels_taguchi.currentText()))
+                try:
+                    toa_points = get_oa(len(variables), int(self.levels_taguchi.currentText()))
+                except ValueError as ve:
+                    pop = BasicPopup(parent=self.parent, title="ERROR", message=str(ve))
+                    pop.exec()
+                    return
 
                 points = scale_to_bounds(toa_points, [v.min for v in variables], [v.max for v in variables])
 
@@ -228,10 +234,14 @@ class DesignOfExperimentsPage(QWidget):
                 points = lhs(variables, self.data_points.value())
 
             case _:
-                raise ValueError(f"MethodType not found for {self.method_type.currentText()}.")
+                pop = BasicPopup(parent=self.parent, title="ERROR", message=f"MethodType not found for {self.method_type.currentText()}.")
+                pop.exec()
+                return
                 
         if len(points) == 0:
-            raise ValueError(f"No valid points using method {MethodType(self.method_type.currentIndex())}.")
+            pop = BasicPopup(parent=self.parent, title="ERROR", message=f"No valid points using method {MethodType(self.method_type.currentIndex())}.")
+            pop.exec()
+            return
 
         data = []
         for point in points:

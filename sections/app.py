@@ -10,10 +10,11 @@ from qfluentwidgets import (
 
 from sections.designofexperiments import DesignOfExperimentsPage
 from sections.optimization import OptimizationPage
-from sections.formulation import FormulationPage
+from sections.formulation import FormulationPage, ResetIcon
 from sections.metamodeling import MetamodelPage
 from sections.settingspage import SettingsPage, is_valid_hex_color
 from sections.mainpage import MainPage
+from sections.plotting import PlottingPage, GraphIcon
 
 from testing.inputfnc2 import InputFile
 from stylesheet.accents import ACCENT_COLORS
@@ -41,12 +42,13 @@ class App(FluentWindow):
         self.set_app_theme()
 
         # --- PAGES ---
-        self.frm = FormulationPage(self)
-        self.doe = DesignOfExperimentsPage(self)
+        self.frm = FormulationPage(parent=self)
+        self.doe = DesignOfExperimentsPage(parent=self)
         self.mmd = MetamodelPage(parent=self, doe_table=self.doe.table)
         self.opt = OptimizationPage(self.frm)
         self.page_settings = SettingsPage(self.trigger_theme_change)
         self.main_page = MainPage(formpage=self.frm, doepage=self.doe, metapage=self.mmd, optpage=self.opt)
+        self.plotting = PlottingPage(parent=self)
 
         # Connect Optimization
         self.opt.start.pressed.connect(self._start_opt)
@@ -73,6 +75,7 @@ class App(FluentWindow):
         )
         self.navigationInterface.addSeparator()
         self.addSubInterface(self.main_page, FI.HOME, "Main")
+        self.addSubInterface(self.plotting, GraphIcon(), "Plotting")
         self.navigationInterface.addSeparator()
         self.navigationInterface.addSeparator(position=NavigationItemPosition.BOTTOM)
         view_documentation = NavigationPushButton(FI.QUESTION, "View Documentation", isSelectable=False)
