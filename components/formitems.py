@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout
-
 from PySide6.QtCore import Qt
-
-from qfluentwidgets import LineEdit, EditableComboBox, SubtitleLabel, ToolButton, FluentIcon as FI
 
 from components.equationbutton import EquationButton
 from components.flipequality import FlipEquality
+from testing.fnc_objects import Variable, Function
+
+from qfluentwidgets import LineEdit, EditableComboBox, SubtitleLabel, ToolButton, FluentIcon as FI
 
 class DefaultItem(QWidget):
     def __init__(self):
@@ -49,6 +49,9 @@ class VariableItem(DefaultItem):
         self.layout.addWidget(self.max_box)
 
         self.add_btns()
+
+    def get_variable_object(self) -> Variable:
+        return Variable(self.var_box.text(), float(self.min_box.text()), float(self.max_box.text()))
 
 class ConstantItem(DefaultItem):
     def __init__(self, name: str, value: float):
@@ -167,4 +170,6 @@ class FunctionItem(DefaultItem):
         self.layout.addWidget(SubtitleLabel(";"))
 
         self.add_btns()
-
+    
+    def get_function_object(self, variables: list[Variable]) -> Function:
+        return Function(self.name_box.text(), self.value_box.equation_text, [var.symbol for var in variables])

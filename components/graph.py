@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QStackedWidget, QHBoxLayout, QDialog, QLabel
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QFontDatabase
+from PySide6.QtGui import QFontDatabase
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from matplotlib.figure import Figure
@@ -15,12 +15,6 @@ class MplWidget(FigureCanvasQTAgg):
         self.axes = self.fig.add_subplot(111)
         self.points = []
         super().__init__(self.fig)
-    
-    def delete_fig(self):
-        plt.close(self.fig)
-    
-    def __del__(self):
-        self.delete_fig()
 
     def plot(self, points):
         self.points = points
@@ -30,6 +24,12 @@ class MplWidget(FigureCanvasQTAgg):
         self.points = []
         self.axes.clear()
         self.draw_idle()
+    
+    def delete_fig(self):
+        plt.close(self.fig)
+    
+    def __del__(self):
+        self.delete_fig()
 
 class ToggleWidget(QWidget):
     def __init__(self, parent=None):
@@ -108,7 +108,6 @@ class ToggleWidget(QWidget):
         dialog = QDialog()
         dialog.setWindowTitle("Optimization Results Graph")
         dialog.resize(1200, 800)
-        # dialog.setStyleSheet(f"QDialog {{background-color: #{'202020' if theme() == Theme.DARK else 'f0f4f9'};}}")
         layout = QVBoxLayout()
 
         graphWidget = MplWidget(self, width=5, height=4, dpi=100)

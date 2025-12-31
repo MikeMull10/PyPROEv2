@@ -1,7 +1,5 @@
-from PySide6.QtWidgets import (
-    QApplication, QFileDialog, QWidget, QHBoxLayout, QVBoxLayout
-)
-from PySide6.QtGui import QIcon, QKeySequence, QAction, QShortcut
+from PySide6.QtWidgets import QApplication, QFileDialog
+from PySide6.QtGui import QIcon, QKeySequence, QShortcut
 from PySide6.QtCore import Qt, QSettings
 from qfluentwidgets import (
     FluentWindow, setTheme, setThemeColor, Theme, theme,
@@ -10,7 +8,7 @@ from qfluentwidgets import (
 
 from sections.designofexperiments import DesignOfExperimentsPage
 from sections.optimization import OptimizationPage
-from sections.formulation import FormulationPage, ResetIcon
+from sections.formulation import FormulationPage
 from sections.metamodeling import MetamodelPage
 from sections.settingspage import SettingsPage, is_valid_hex_color
 from sections.mainpage import MainPage
@@ -92,6 +90,8 @@ class App(FluentWindow):
         QShortcut(QKeySequence("Ctrl+Q"), self).activated.connect(self._close_application)
         QShortcut(QKeySequence("Ctrl+O"), self).activated.connect(self._open_file)
         QShortcut(QKeySequence("Ctrl+S"), self).activated.connect(self._save_file)
+        QShortcut(QKeySequence("Ctrl+1"), self, activated=lambda: self.switch_to_page(self.main_page))
+        QShortcut(QKeySequence("Ctrl+2"), self, activated=lambda: self.switch_to_page(self.plotting))
 
     def _close_application(self):
         p = self.opt.process
@@ -115,7 +115,10 @@ class App(FluentWindow):
             self.settings.setValue('previous_open_file_dir', filename)
 
             if filename.endswith(".fnc"):
-                self.frm.load_from_file(file_path=filename)
+                if self.stackedWidget.currentIndex() == 0:
+                    self.frm.load_from_file(file_path=filename)
+                elif self.stackedWidget.currentIndex() == 1:
+                    self.plotting.load_from_file(file_path=filename)
             
             elif filename.endswith(".doe"):
                 self.doe.load_from_file(file_path=filename)
@@ -161,7 +164,8 @@ class App(FluentWindow):
 
         file = InputFile(fnc, is_file=False)
         if file.error:
-            print(f"ERROR: {file.error_message}")
+            pop = BasicPopup(self, title="ERROR", message=f"Error with Formulation: {file.error_message}")
+            pop.exec()
             return
 
         self.opt._solve(fnc)
@@ -189,3 +193,6 @@ class App(FluentWindow):
         self.doe.table.on_selection_changed()
         self.frm.divider.style = theme()
         self.frm.divider.update_style()
+    
+    def switch_to_page(self, page_widget):
+        self.stackedWidget.setCurrentWidget(page_widget)

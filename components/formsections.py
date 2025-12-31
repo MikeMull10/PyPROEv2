@@ -295,6 +295,6 @@ class FunctionsSection(FormSection):
         for i in range(self.row_container.count()):
             item: FunctionItem = self.row_container.itemAt(i).widget()
 
-            ret += f"{item.name_box.text()} = {item.value_box.text()};\n"
+            ret += f"{item.name_box.text()} = {item.value_box.equation_text};\n"
 
         return ret

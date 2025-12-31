@@ -6,6 +6,7 @@ from qfluentwidgets import theme, Theme, SmoothScrollArea, SubtitleLabel, Fluent
 from components.formsections import FormSection, VariablesSection, ConstantsSection, ObjectivesSection, FunctionsSection, EqualitiesSection, InequalitiesSection, FunctionItem, ObjectiveItem, InequalityItem, EqualityItem
 from components.function_parse import parse_function_offset
 from components.divider import Divider
+from components.basicpopup import BasicPopup
 from testing.inputfnc2 import InputFile
 import os
 
@@ -145,7 +146,8 @@ class FormulationPage(QWidget):
                 self.fnc_section.add_row(fun.name.upper(), fun.text.upper())
 
         except Exception as e:
-            print("Failed to load file:", e)
+            pop = BasicPopup(parent=self.parent, title="ERROR", message=f"Failed to load file: {e}.")
+            pop.exec()
 
     def convert_to_fnc(self) -> str:
         fnc_str  = f"#{'-' * 50}\n"
