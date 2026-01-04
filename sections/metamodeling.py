@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
 
 from components.clickabletitle import ClickableTitleLabel
 from components.polyreg import PolyTypes, poly_lookup
@@ -10,7 +11,7 @@ from sections.designofexperiments import make_row
 from sections.formulation import ResetIcon
 from testing.fnc_objects import Variable
 
-from qfluentwidgets import ComboBox, PrimaryPushButton, ToolButton, PrimaryToolButton, SmoothScrollArea, FluentIcon as FI
+from qfluentwidgets import RoundMenu, ComboBox, PrimaryPushButton, ToolButton, PrimaryDropDownToolButton, SmoothScrollArea, FluentIcon as FI
 
 class MetamodelPage(QWidget):
     def __init__(self, doe_table: DOETable=None, parent=None):
@@ -76,13 +77,22 @@ class MetamodelPage(QWidget):
         self.functions_section = FunctionsSection(parent=parent, clickable_title=True)
         self.functions_section.add_btn.deleteLater()
         self.functions_section.reset_btn = ToolButton(ResetIcon())
-        self.functions_section.next_btn  = PrimaryToolButton(FI.RIGHT_ARROW)
+        self.functions_section.next_btn  = PrimaryDropDownToolButton(FI.RIGHT_ARROW)
         self.functions_section.reset_btn.setCursor(Qt.PointingHandCursor)
         self.functions_section.next_btn .setCursor(Qt.PointingHandCursor)
         self.functions_section.top_bar.addWidget(self.functions_section.reset_btn)
         self.functions_section.top_bar.addWidget(self.functions_section.next_btn)
         self.functions_section.reset_btn.clicked.connect(self.functions_section.clear)
-        self.functions_section.next_btn.clicked.connect(self.send_to_optimization)
+
+        menu = RoundMenu()
+        menu.view.setCursor(Qt.PointingHandCursor)
+        send_opt_action = QAction("Send to Formulation")
+        send_plt_action = QAction("Send to Plotting")
+        send_opt_action.triggered.connect(lambda: self.send(send_to_opt=True))
+        send_plt_action.triggered.connect(lambda: self.send(send_to_opt=False))
+        menu.addActions([send_opt_action, send_plt_action])
+
+        self.functions_section.next_btn.setMenu(menu)
         self.functions_section.reset_btn.setToolTip("Clear the functions.")
         self.functions_section.next_btn.setToolTip("Send functions to Formulation section.")
 
@@ -181,15 +191,15 @@ class MetamodelPage(QWidget):
         for i in range(dependent_vars.shape[1]):
             self.functions_section.add_row(name=f"F{i + 1}", value=generate_rbf(independent_vars, dependent_vars[:, i], rbf, epsilon=1.0, poly_order=self.poly_order.currentIndex(), variable_names=var_names))
     
-    def send_to_optimization(self):
+    def send(self, send_to_opt: bool=True):
         vars = self.parent.doe.table.variables
 
-        var_section: VariablesSection = self.parent.frm.var_section
+        var_section: VariablesSection = self.parent.frm.var_section if send_to_opt else self.parent.plotting.formpage.var_section
         v: Variable
         for v in vars:
             var_section.add_row(v.min, v.max, v.symbol)
 
-        fnc_section: FunctionsSection = self.parent.frm.fnc_section
+        fnc_section: FunctionsSection = self.parent.frm.fnc_section if send_to_opt else self.parent.plotting.formpage.fnc_section
         for i in range(self.functions_section.row_container.count()):
             item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
             fnc_section.add_row(item.name_box.text(), item.value_box.equation_text)

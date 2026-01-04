@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 
 from qfluentwidgets import TitleLabel, PrimaryToolButton, FluentIcon as FI
 
@@ -7,7 +7,7 @@ from components.formitems import DefaultItem, VariableItem, ConstantItem, Object
 from components.clickabletitle import ClickableSubtitleLabelIcon
 
 class FormSection(QWidget):
-    def __init__(self, title: str = "", clickable_title: bool=True):
+    def __init__(self, title: str="", clickable_title: bool=True):
         super().__init__()
         self.number_items = 0
         self.showing = True
@@ -29,6 +29,7 @@ class FormSection(QWidget):
         self.add_btn = PrimaryToolButton(FI.ADD)
         self.add_btn.setCursor(Qt.PointingHandCursor)
         self.add_btn.clicked.connect(lambda: self.add_row())
+        self.add_btn.setToolTip(f"Add {title[:-1] if title.endswith('s') else title}")
 
         self.top_bar.addWidget(self.title)
         self.top_bar.addStretch()
@@ -116,6 +117,8 @@ class FormSection(QWidget):
         self.update_count()
 
 class VariablesSection(FormSection):
+    row_count_changed = Signal(int)
+
     def __init__(self, clickable_title: bool=True):
         super().__init__("Variables", clickable_title=clickable_title)
     
@@ -127,6 +130,7 @@ class VariablesSection(FormSection):
         self.row_container.addWidget(item)
 
         super().add_row(item)
+        self.row_count_changed.emit(self.row_container.count())
     
     def get_fnc(self) -> str:
         ret = f"*VARIABLE: {self.row_container.count()}\n\n"
@@ -137,6 +141,10 @@ class VariablesSection(FormSection):
             ret += f"{item.var_box.text()}: {item.min_box.text()}, {item.max_box.text()}\n"
 
         return ret
+    
+    def delete_item(self, item: DefaultItem):
+        super().delete_item(item)
+        self.row_count_changed.emit(self.row_container.count())
     
 class ConstantsSection(FormSection):
     def __init__(self):
@@ -270,6 +278,8 @@ class InequalitiesSection(FormSection):
         return ret
 
 class FunctionsSection(FormSection):
+    row_count_changed = Signal(int)
+
     def __init__(self, parent=None, function_name_update: callable=None, clickable_title: bool=True):
         super().__init__("Functions", clickable_title=clickable_title)
         self.parent = parent
@@ -284,10 +294,12 @@ class FunctionsSection(FormSection):
 
         super().add_row(item)
         if self.function_name_update: self.function_name_update()
+        self.row_count_changed.emit(self.row_container.count())
 
     def delete_item(self, item):
         super().delete_item(item)
         if self.function_name_update: self.function_name_update()
+        self.row_count_changed.emit(self.row_container.count())
     
     def get_fnc(self):
         ret = f"*FUNCTION: {self.row_container.count()}\n\n"

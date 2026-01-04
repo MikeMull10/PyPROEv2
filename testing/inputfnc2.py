@@ -51,10 +51,11 @@ def split_functions(text: str):
     return functions
 
 class InputFile:
-    def __init__(self, input_str: str, is_file: bool=True, check_nums: bool=True):
+    def __init__(self, input_str: str, is_file: bool=True, check_nums: bool=True, no_objectives_throws_error: bool = True):
         self.file_str   = input_str
         self.is_file    = is_file
         self.check_nums = check_nums
+        self.no_objectives_throws_error = no_objectives_throws_error
 
         self.error:        bool = False
         self.error_message: str = ""
@@ -205,7 +206,7 @@ class InputFile:
             self.error_message = "No functions."
             return
 
-        elif len(self.objectives) == 0:
+        elif len(self.objectives) == 0 and self.no_objectives_throws_error:
             self.error = True
             self.error_message = "No objectives."
             return

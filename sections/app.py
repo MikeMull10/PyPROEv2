@@ -118,7 +118,7 @@ class App(FluentWindow):
                 if self.stackedWidget.currentIndex() == 0:
                     self.frm.load_from_file(file_path=filename)
                 elif self.stackedWidget.currentIndex() == 1:
-                    self.plotting.load_from_file(file_path=filename)
+                    self.plotting.formpage.load_from_file(file_path=filename)
             
             elif filename.endswith(".doe"):
                 self.doe.load_from_file(file_path=filename)

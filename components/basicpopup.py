@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtCore import Qt
 from qfluentwidgets import MessageBoxBase, BodyLabel, SubtitleLabel
 
@@ -22,4 +23,7 @@ class BasicPopup(MessageBoxBase):
         self.yesButton.setCursor(Qt.PointingHandCursor)
         self.cancelButton.setCursor(Qt.PointingHandCursor)
         if hide_cancel: self.cancelButton.hide()
+
+        QShortcut(QKeySequence("Ctrl+Return"), self, activated=self.yesButton.click)
+        QShortcut(QKeySequence("Ctrl+Enter"), self, activated=self.yesButton.click)
     

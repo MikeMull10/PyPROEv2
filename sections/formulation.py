@@ -38,6 +38,7 @@ class FormulationPage(QWidget):
 
         title_row = QWidget()
         layout = QHBoxLayout(title_row)
+        layout.setContentsMargins(0, 0, 0, 0)
         title = SubtitleLabel("Formulation")
         font = QFont()
         font.setPointSize(18)

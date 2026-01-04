@@ -1,6 +1,6 @@
-from PySide6.QtWidgets import QVBoxLayout, QWidget, QStyle, QStyleOptionButton
+from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QPainter
 
 from qfluentwidgets import MessageBoxBase, PushButton, PlainTextEdit
 
@@ -39,8 +39,13 @@ class EquationEditorDialog(MessageBoxBase):
 
         layout.addWidget(self.text_area)
 
-        # Add main body to dialog
         self.viewLayout.addWidget(container)
+
+        self.yesButton.setCursor(Qt.PointingHandCursor)
+        self.cancelButton.setCursor(Qt.PointingHandCursor)
+
+        QShortcut(QKeySequence("Ctrl+Return"), self, activated=self.yesButton.click)
+        QShortcut(QKeySequence("Ctrl+Enter"), self, activated=self.yesButton.click)
 
     def get_equation_text(self):
         return self.text_area.toPlainText()

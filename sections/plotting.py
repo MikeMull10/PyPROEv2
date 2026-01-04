@@ -3,19 +3,17 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
-from components.formsections import VariablesSection, VariableItem, FunctionsSection, FunctionItem
 from components.basicpopup import BasicPopup
 from components.graph import MplWidget
 from testing.fnc_objects import Variable, Function
 from testing.inputfnc2 import InputFile
-from sections.formulation import ResetIcon
+from sections.formulation import FormulationPage
 
 from matplotlib.axes import Axes
-from qfluentwidgets import MessageBoxBase, ComboBox, SubtitleLabel, SmoothScrollArea, FluentIconBase, PrimaryDropDownPushButton, ToolButton, PushButton, RoundMenu, Theme, theme
+from qfluentwidgets import MessageBoxBase, ComboBox, SubtitleLabel, FluentIconBase, PrimaryDropDownPushButton, PushButton, RoundMenu, Theme, theme
 
 from enum import Enum
 import numpy as np
-import os
 import re
 
 def latexify(var_name: str) -> str:
@@ -68,28 +66,13 @@ class PlottingPage(QWidget):
         self.setObjectName("Plotting")
         self.parent = parent
 
-        self.var_section = VariablesSection()
-        self.fnc_section = FunctionsSection(parent=self)
+        self.formpage = FormulationPage(parent=self)
         
         self.main = QHBoxLayout(self)
         self.main.setContentsMargins(4, 4, 4, 4)
 
-        scroll = SmoothScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("QScrollArea{background: transparent; border: none}")
-        self.main.addWidget(scroll)
-        
-        self.formulation_layout = QVBoxLayout()
-        self.reset_layout = QHBoxLayout()
-        self.reset_layout.addStretch()
-        self.reset_btn = ToolButton(ResetIcon())
-        self.reset_btn.setCursor(Qt.PointingHandCursor)
-        self.reset_btn.clicked.connect(self.clear)
-        self.reset_layout.addWidget(self.reset_btn)
-        self.formulation_layout.addLayout(self.reset_layout)
-        self.formulation_layout.addWidget(self.var_section)
-        self.formulation_layout.addWidget(self.fnc_section)
-        self.formulation_layout.addStretch()
+        self.form_layout = QVBoxLayout()
+        self.form_layout.addWidget(self.formpage)
 
         self.plot_btn = PrimaryDropDownPushButton("Plot")
 
@@ -97,8 +80,9 @@ class PlottingPage(QWidget):
         contours_action = QAction("Contours")
         surface_action = QAction("Surface")
 
-        contours_action.triggered.connect(lambda: self.populate_graph(PlotType.CONTOURS))
-        surface_action.triggered.connect(lambda: self.populate_graph(PlotType.SURFACE))
+        contours_action.triggered.connect(lambda: self.populate_graph(plot_type=PlotType.CONTOURS))
+        surface_action.triggered.connect(lambda: self.populate_graph(plot_type=PlotType.SURFACE))
+        menu.view.setCursor(Qt.PointingHandCursor)
 
         menu.addActions([contours_action, surface_action])
 
@@ -112,41 +96,48 @@ class PlottingPage(QWidget):
         btn_bar = QHBoxLayout()
         btn_bar.addWidget(self.plot_btn)
         btn_bar.addWidget(self.popout_btn)
-        self.formulation_layout.addLayout(btn_bar)
-
-        scroll.setLayout(self.formulation_layout)
+        self.form_layout.addLayout(btn_bar)
+        self.main.addLayout(self.form_layout)
 
         self.graph = MplWidget()
         self.main.addWidget(self.graph)
 
-        self.main.setStretch(0, 2)
+        self.main.setStretch(0, 4)
         self.main.setStretch(1, 5)
 
         self.XYZ = {'X': None, 'Y': None, 'Z': None}
         self.titles = {'X': None, 'Y': None, 'Z': None}
     
     def populate_graph(self, plot_type: PlotType):
-        vars: list[Variable] = []
-        fncs: list[Function] = []
-
-        for i in range(self.var_section.row_container.count()):
-            item: VariableItem = self.var_section.row_container.itemAt(i).widget()
-            vars.append(item.get_variable_object())
-
-        for i in range(self.fnc_section.row_container.count()):
-            item: FunctionItem = self.fnc_section.row_container.itemAt(i).widget()
-            fncs.append(item.get_function_object(vars))
-
-        if len(fncs) == 0:
-            pop = BasicPopup(parent=self.parent, title="ERROR", message=f"ERROR: No function. You must have at least one function to create a plot.")
+        file = InputFile(self.formpage.convert_to_fnc(), is_file=False, check_nums=False, no_objectives_throws_error=(plot_type == PlotType.CONTOURS))
+        if file.error:
+            pop = BasicPopup(self, title="ERROR", message=f"Error with Formulation: {file.error_message}")
             pop.exec()
             return
         
-        try:
-            self.get_surface_plot(self.graph.axes, variables=vars, function=fncs[0])
-        except Exception as e:
-            pop = BasicPopup(parent=self.parent, title="ERROR", message=f"{e}")
-            pop.exec()
+        if plot_type == PlotType.SURFACE:
+            
+            if len(file.functions) == 0:
+                pop = BasicPopup(parent=self.parent, title="ERROR", message=f"ERROR: No function. You must have at least one function to create a plot.")
+                pop.exec()
+                return
+            
+            elif len(file.functions) > 1:
+                pop = ChoosePopup(parent=self, title="Select a Function to Graph", options=[fnc.name.upper() for fnc in file.functions])
+                ok, index = pop.exec()
+                if not ok:
+                    return
+                
+                func = file.functions[index]
+            
+            else: # only 1 function
+                func = file.functions[0]
+            
+            try:
+                self.get_surface_plot(self.graph.axes, variables=file.variables, function=func)
+            except Exception as e:
+                pop = BasicPopup(parent=self.parent, title="ERROR", message=f"{e}")
+                pop.exec()
     
     def get_surface_plot(self, ax: Axes, variables: list[Variable], function: Function) -> None:
         if len(variables) != 2:
@@ -180,32 +171,8 @@ class PlottingPage(QWidget):
 
         self.graph.draw_idle()
 
-    def load_from_file(self, file_path):
-        try:
-            if not os.path.exists(file_path):
-                raise FileNotFoundError
-
-            file = InputFile(file_path)
-            
-            ### VARIABLES
-            for var in file.variables:
-                self.var_section.add_row(var.min, var.max, var.symbol.upper())
-
-            ### FUNCTIONS
-            for fun in file.functions:
-                self.fnc_section.add_row(fun.name.upper(), fun.text.upper())
-            
-            for i in range(self.fnc_section.row_container.count()):
-                item: FunctionItem = self.fnc_section.row_container.itemAt(i).widget()
-                item.value_box.clamp_factor = 30
-                item.value_box.set_display_text()
-
-        except Exception as e:
-            pop = BasicPopup(parent=self.parent, title="ERROR", message=f"Failed to load file: {e}.")
-            pop.exec()
-    
     def popout(self):
-        if None in self.XYZ.values():
+        if any(v is None for v in self.XYZ.values()):
             return
 
         dialog = QDialog()
@@ -245,6 +212,3 @@ class PlottingPage(QWidget):
 
         dialog.exec()
 
-    def clear(self):
-        self.var_section.clear()
-        self.fnc_section.clear()

@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
-from PySide6.QtCore import QUrl, QSize
+from PySide6.QtCore import QUrl, QSize, Qt
 
-from qfluentwidgets import LineEdit, MessageBoxBase, TextBrowser, PrimaryPushButton, PushButton, FluentIcon as FI
+from qfluentwidgets import LineEdit, MessageBoxBase, TextBrowser, PrimaryPushButton, FluentIcon as FI
 
 
 class DocumentationPopup(MessageBoxBase):
@@ -32,6 +32,8 @@ class DocumentationPopup(MessageBoxBase):
         content.setFixedHeight(base_y)
 
         self.yesButton.setText("Close")
+        self.yesButton.setCursor(Qt.PointingHandCursor)
+        self.cancelButton.setCursor(Qt.PointingHandCursor)
         self.cancelButton.hide()
 
     def do_search(self):
