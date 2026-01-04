@@ -11,8 +11,7 @@ from testing.inputfnc2 import InputFile
 from sections.formulation import ResetIcon
 
 from matplotlib.axes import Axes
-
-from qfluentwidgets import SmoothScrollArea, FluentIconBase, ToolButton, PrimaryPushButton, PrimaryDropDownPushButton, PushButton, RoundMenu, Theme, theme
+from qfluentwidgets import MessageBoxBase, ComboBox, SubtitleLabel, SmoothScrollArea, FluentIconBase, PrimaryDropDownPushButton, ToolButton, PushButton, RoundMenu, Theme, theme
 
 from enum import Enum
 import numpy as np
@@ -35,6 +34,33 @@ class PlotType(Enum):
 class GraphIcon(FluentIconBase):
     def path(self, _theme=Theme.AUTO):
         return "assets/chart-white.svg" if theme() == Theme.DARK else "assets/chart-black.svg"
+    
+class ChoosePopup(MessageBoxBase):
+    def __init__(self, parent, title: str | None=None, options: list[str] | None=None, hide_cancel: bool=False):
+        """
+        parent needs to be the main window
+        """
+        super().__init__(parent)
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(15)
+
+        if title: layout.addWidget(SubtitleLabel(title))
+        
+        self.options_box = ComboBox()
+        if options: 
+            layout.addWidget(self.options_box)
+            self.options_box.addItems(options)
+
+        self.viewLayout.addWidget(container)
+        self.yesButton.setCursor(Qt.PointingHandCursor)
+        self.cancelButton.setCursor(Qt.PointingHandCursor)
+        if hide_cancel: self.cancelButton.hide()
+    
+    def exec(self) -> tuple[bool, int]:
+        return super().exec(), self.options_box.currentIndex()
 
 class PlottingPage(QWidget):
     def __init__(self, parent=None):
