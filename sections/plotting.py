@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QDialog, QLabel
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 
 from components.formsections import VariablesSection, VariableItem, FunctionsSection, FunctionItem
@@ -7,18 +8,18 @@ from components.basicpopup import BasicPopup
 from components.graph import MplWidget
 from testing.fnc_objects import Variable, Function
 from testing.inputfnc2 import InputFile
+from sections.formulation import ResetIcon
 
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 
-from qfluentwidgets import SmoothScrollArea, FluentIconBase, PrimaryPushButton, PushButton, Theme, theme
+from qfluentwidgets import SmoothScrollArea, FluentIconBase, ToolButton, PrimaryPushButton, PrimaryDropDownPushButton, PushButton, RoundMenu, Theme, theme
+
+from enum import Enum
 import numpy as np
 import os
 import re
 
 def latexify(var_name: str) -> str:
-    # Match letters followed by numbers
     match = re.match(r"([A-Za-z]+)(\d+)", var_name)
     if match:
         letters, numbers = match.groups()
@@ -26,6 +27,10 @@ def latexify(var_name: str) -> str:
     else:
         return var_name
 
+
+class PlotType(Enum):
+    CONTOURS = 0
+    SURFACE = 1
 
 class GraphIcon(FluentIconBase):
     def path(self, _theme=Theme.AUTO):
@@ -49,12 +54,29 @@ class PlottingPage(QWidget):
         self.main.addWidget(scroll)
         
         self.formulation_layout = QVBoxLayout()
+        self.reset_layout = QHBoxLayout()
+        self.reset_layout.addStretch()
+        self.reset_btn = ToolButton(ResetIcon())
+        self.reset_btn.setCursor(Qt.PointingHandCursor)
+        self.reset_btn.clicked.connect(self.clear)
+        self.reset_layout.addWidget(self.reset_btn)
+        self.formulation_layout.addLayout(self.reset_layout)
         self.formulation_layout.addWidget(self.var_section)
         self.formulation_layout.addWidget(self.fnc_section)
         self.formulation_layout.addStretch()
 
-        self.plot_btn = PrimaryPushButton("Plot")
-        self.plot_btn.clicked.connect(self.populate_graph)
+        self.plot_btn = PrimaryDropDownPushButton("Plot")
+
+        menu = RoundMenu()
+        contours_action = QAction("Contours")
+        surface_action = QAction("Surface")
+
+        contours_action.triggered.connect(lambda: self.populate_graph(PlotType.CONTOURS))
+        surface_action.triggered.connect(lambda: self.populate_graph(PlotType.SURFACE))
+
+        menu.addActions([contours_action, surface_action])
+
+        self.plot_btn.setMenu(menu)
         self.plot_btn.setCursor(Qt.PointingHandCursor)
 
         self.popout_btn = PushButton("View Graph")
@@ -77,7 +99,7 @@ class PlottingPage(QWidget):
         self.XYZ = {'X': None, 'Y': None, 'Z': None}
         self.titles = {'X': None, 'Y': None, 'Z': None}
     
-    def populate_graph(self):
+    def populate_graph(self, plot_type: PlotType):
         vars: list[Variable] = []
         fncs: list[Function] = []
 
@@ -157,6 +179,9 @@ class PlottingPage(QWidget):
             pop.exec()
     
     def popout(self):
+        if None in self.XYZ.values():
+            return
+
         dialog = QDialog()
         dialog.setWindowTitle("Optimization Results Graph")
         dialog.resize(1200, 800)
@@ -193,3 +218,7 @@ class PlottingPage(QWidget):
         dialog.setLayout(layout)
 
         dialog.exec()
+
+    def clear(self):
+        self.var_section.clear()
+        self.fnc_section.clear()
