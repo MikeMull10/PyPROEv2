@@ -1,6 +1,3 @@
-from handlers.gradmanager import GradientManager
-from handlers.inputfnc import clean, create_function_from_string
-from handlers.doefile import DOEFile
 from scipy.stats import f
 import numpy as np
 import itertools

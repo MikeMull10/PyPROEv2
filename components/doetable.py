@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QTableWidgetItem, QAbstractItemView, QApplication,
 from PySide6.QtGui import QKeySequence, QColor
 
 from components.basicpopup import BasicPopup
-from testing.fnc_objects import Variable, Function
+from components.fnc_objects import Variable, Function
 
 from qfluentwidgets import TableWidget, themeColor, theme, Theme, ToolButton, FluentIcon as FI
 import numpy as np

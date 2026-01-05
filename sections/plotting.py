@@ -5,8 +5,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 
 from components.basicpopup import BasicPopup
 from components.graph import MplWidget
-from testing.fnc_objects import Variable, Function
-from testing.inputfnc2 import InputFile
+from components.fnc_objects import Variable, Function
+from components.inputfnc2 import InputFile
 from sections.formulation import FormulationPage
 
 from matplotlib.axes import Axes

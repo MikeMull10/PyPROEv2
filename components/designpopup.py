@@ -3,7 +3,7 @@ from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtCore import Qt, QSize
 
 from components.formsections import VariablesSection, FunctionsSection, VariableItem, FunctionItem
-from testing.fnc_objects import Variable, Function
+from components.fnc_objects import Variable, Function
 
 from qfluentwidgets import MessageBoxBase, SmoothScrollArea
 

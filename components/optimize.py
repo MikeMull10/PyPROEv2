@@ -1,6 +1,6 @@
-from testing.inputfnc2 import InputFile
-from testing.fnc_objects import Function
-from testing.optimization_data import Optimization, Opt
+from components.inputfnc2 import InputFile
+from components.fnc_objects import Function
+from components.optimization_data import Optimization, Opt
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.algorithms.moo.nsga3 import NSGA3

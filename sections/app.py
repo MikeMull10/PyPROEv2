@@ -14,7 +14,7 @@ from sections.settingspage import SettingsPage, is_valid_hex_color
 from sections.mainpage import MainPage
 from sections.plotting import PlottingPage, GraphIcon
 
-from testing.inputfnc2 import InputFile
+from components.inputfnc2 import InputFile
 from stylesheet.accents import ACCENT_COLORS
 
 from components.helppopup import DocumentationPopup

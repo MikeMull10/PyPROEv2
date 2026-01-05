@@ -1,6 +1,6 @@
 from scipy.stats import qmc
 from numpy import ndarray
-from testing.fnc_objects import Variable
+from components.fnc_objects import Variable
 
 def lhs(variables: list[Variable], samples: int) -> ndarray:
     sampler = qmc.LatinHypercube(len(variables))

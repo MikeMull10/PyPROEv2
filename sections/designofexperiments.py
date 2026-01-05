@@ -8,7 +8,7 @@ from components.designpopup import DesignPopup
 from components.ccd import central_composite, scale_to_bounds
 from components.taguchi import get_oa
 from components.hypercube import lhs
-from testing.fnc_objects import Function, Variable
+from components.fnc_objects import Function, Variable
 
 from qfluentwidgets import SubtitleLabel, ComboBox, SpinBox, PushButton, PrimaryPushButton
 import numpy as np

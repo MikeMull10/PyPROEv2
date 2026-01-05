@@ -6,11 +6,11 @@ from PySide6.QtGui import QColor
 
 from qfluentwidgets import SpinBox, DoubleSpinBox, ComboBox, PushButton, PrimaryPushButton
 
-from testing.inputfnc2 import InputFile
-from testing.optimize import Optimize as Opt
-from testing.optimize import EvolutionType
-from testing.optimization_data import Opt as OptStatus
-from testing.optimization_data import Optimization as OptObj
+from components.inputfnc2 import InputFile
+from components.optimize import Optimize as Opt
+from components.optimize import EvolutionType
+from components.optimization_data import Opt as OptStatus
+from components.optimization_data import Optimization as OptObj
 
 from components.clickabletitle import ClickableTitleLabel
 

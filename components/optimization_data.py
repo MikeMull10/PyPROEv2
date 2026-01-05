@@ -1,5 +1,5 @@
 from enum import Enum
-from testing.inputfnc2 import InputFile
+from components.inputfnc2 import InputFile
 import numpy as np
 
 class Opt(Enum):

@@ -1,4 +1,4 @@
-from testing.fnc_objects import Variable, Constant, Function, BasicFunction, Node
+from components.fnc_objects import Variable, Constant, Function, BasicFunction, Node
 from scipy.optimize import NonlinearConstraint
 
 import matplotlib.pyplot as plt

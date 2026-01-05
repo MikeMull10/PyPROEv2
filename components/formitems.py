@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 
 from components.equationbutton import EquationButton
 from components.flipequality import FlipEquality
-from testing.fnc_objects import Variable, Function
+from components.fnc_objects import Variable, Function
 
 from qfluentwidgets import LineEdit, EditableComboBox, SubtitleLabel, ToolButton, FluentIcon as FI
 

@@ -17,7 +17,7 @@ from sections.metamodeling import MetamodelPage
 
 from basics.settings import SettingsManager
 
-from testing.inputfnc2 import InputFile
+from components.inputfnc2 import InputFile
 
 class MainWindow(QMainWindow):
     def __init__(self):

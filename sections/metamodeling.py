@@ -9,7 +9,7 @@ from components.formsections import FunctionsSection, FunctionItem, VariablesSec
 from components.rbf import RBFType, generate_rbf
 from sections.designofexperiments import make_row
 from sections.formulation import ResetIcon
-from testing.fnc_objects import Variable
+from components.fnc_objects import Variable
 
 from qfluentwidgets import RoundMenu, ComboBox, PrimaryPushButton, ToolButton, PrimaryDropDownToolButton, SmoothScrollArea, FluentIcon as FI
 

@@ -7,7 +7,7 @@ from components.formsections import FormSection, VariablesSection, ConstantsSect
 from components.function_parse import parse_function_offset
 from components.divider import Divider
 from components.basicpopup import BasicPopup
-from testing.inputfnc2 import InputFile
+from components.inputfnc2 import InputFile
 import os, pyperclip
 
 class ResetIcon(FluentIconBase):
