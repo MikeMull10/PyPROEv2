@@ -112,6 +112,7 @@ class OptimizationPage(QWidget):
         self.solver = ComboBox()
         self.solver.addItems(["SLSQP", "SLSQP + WSF", "NSGAII", "NSGAIII"])
         self.solver.currentTextChanged.connect(self._rebuild)
+        self.solver.setCursor(Qt.PointingHandCursor)
         self.solver_row = make_row("Solver:", self.solver)
         self.layout.addWidget(self.solver_row)
 

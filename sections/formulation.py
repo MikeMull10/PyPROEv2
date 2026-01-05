@@ -8,7 +8,7 @@ from components.function_parse import parse_function_offset
 from components.divider import Divider
 from components.basicpopup import BasicPopup
 from testing.inputfnc2 import InputFile
-import os
+import os, pyperclip
 
 class ResetIcon(FluentIconBase):
     def path(self, _theme=Theme.AUTO):
@@ -44,12 +44,24 @@ class FormulationPage(QWidget):
         font.setPointSize(18)
         title.setFont(font)
 
+        copy_btn  = ToolButton(FI.COPY)
+        copy_btn.clicked.connect(self.copy_to_clipboard)
+        copy_btn.setToolTip("Copy to Clipboard")
+        copy_btn.setCursor(Qt.PointingHandCursor)
+
+        paste_btn = ToolButton(FI.PASTE)
+        paste_btn.clicked.connect(self.paste_from_clipboard)
+        paste_btn.setToolTip("Paste from Clipboard")
+        paste_btn.setCursor(Qt.PointingHandCursor)
+
         clear_btn = ToolButton(ResetIcon())
         clear_btn.clicked.connect(self.clear)
         clear_btn.setToolTip("Clear the Formulation section.")
         clear_btn.setCursor(Qt.PointingHandCursor)
 
         layout.addWidget(title)
+        layout.addWidget(copy_btn)
+        layout.addWidget(paste_btn)
         layout.addWidget(clear_btn)
 
         scroll.setWidget(main_content)
@@ -97,12 +109,12 @@ class FormulationPage(QWidget):
             for i in range(section_type.row_container.count()):
                 self.update_options(section_type.row_container.itemAt(i).widget())            
 
-    def load_from_file(self, file_path) -> None:
+    def load_from_file(self, file_path: str, is_file=True) -> None:
         try:
-            if not os.path.exists(file_path):
+            if is_file and not os.path.exists(file_path):
                 raise FileNotFoundError
-
-            file = InputFile(file_path)
+            
+            file = InputFile(file_path, is_file=is_file)
             
             ### VARIABLES
             for var in file.variables:
@@ -170,3 +182,9 @@ class FormulationPage(QWidget):
     def clear(self) -> None:
         for section in [self.var_section, self.con_section, self.obj_section, self.eqs_section, self.iqs_section, self.fnc_section]:
             section.clear()
+
+    def copy_to_clipboard(self):
+        pyperclip.copy(self.convert_to_fnc())
+    
+    def paste_from_clipboard(self):
+        self.load_from_file(pyperclip.paste(), is_file=False)

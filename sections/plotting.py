@@ -106,6 +106,7 @@ class PlottingPage(QWidget):
         self.main.setStretch(1, 5)
 
         self.XYZ = {'X': None, 'Y': None, 'Z': None}
+        self.contour_Zs = []
         self.titles = {'X': None, 'Y': None, 'Z': None}
     
     def populate_graph(self, plot_type: PlotType):
@@ -138,16 +139,83 @@ class PlottingPage(QWidget):
             except Exception as e:
                 pop = BasicPopup(parent=self.parent, title="ERROR", message=f"{e}")
                 pop.exec()
+        
+        elif plot_type == PlotType.CONTOURS:
+
+            if len(file.objectives) == 0:
+                pop = BasicPopup(parent=self.parent, title="ERROR", message=f"ERROR: No objective function. You must have at least one objective function to create a plot.")
+                pop.exec()
+                return
+            
+            elif len(file.objectives) > 1:
+                pop = ChoosePopup(parent=self, title="Select an Objective Function to Graph", options=[fnc.name.upper() for fnc in file.objectives])
+                ok, index = pop.exec()
+                if not ok:
+                    return
+                    
+                obj = file.objectives[index]
+            
+            else: # only 1 objective function
+                obj = file.objectives[0]
+            
+            try:
+                self.get_contour_plot(self.graph.axes, variables=file.variables, objective=obj, equality_constraints=file.equality_constraints, inequality_constraints=file.inequality_constraints)
+            except Exception as e:
+                pop = BasicPopup(parent=self.parent, title="ERROR", message=f"{e}")
+                pop.exec()
+    
+    def get_contour_plot(self, ax: Axes, variables: list[Variable], objective: Function, equality_constraints: list[Function], inequality_constraints: list[Function]) -> None:
+        if len(variables) != 2:
+            raise ValueError(f"Incorrect number of variables. Have {len(variables)}, need 2.")
+
+        fig = ax.figure
+        fig.clear()
+        ax = fig.add_subplot(111)
+
+        x1 = np.linspace(variables[0].min, variables[0].max, 101)
+        x2 = np.linspace(variables[1].min, variables[1].max, 101)
+
+        X, Y = np.meshgrid(x1, x2)
+        Z = np.empty_like(X, dtype=float)
+
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                Z[i, j] = objective([X[i, j], Y[i, j]])
+
+        self.XYZ = {'X': X, 'Y': Y, 'Z': Z}
+        self.plot_type = PlotType.CONTOURS
+
+        # Labels and title
+        self.titles = {'X': latexify(variables[0].symbol), 'Y': latexify(variables[1].symbol), 'Z': latexify(objective.name.upper())}
+        ax.set_xlabel(f"${self.titles['X']}$")
+        ax.set_ylabel(f"${self.titles['Y']}$")
+        ax.set_title(f"Contour Plot")
+        
+        # Contour plots
+        f_contour = ax.contour(X, Y, Z, 30)
+        ax.clabel(f_contour)
+
+        # Constraints contours
+        self.contour_Zs.clear()
+        for fnc in equality_constraints + inequality_constraints:
+            new_Z = np.empty_like(X, dtype=float)
+
+            for i in range(X.shape[0]):
+                for j in range(X.shape[1]):
+                    new_Z[i, j] = fnc([X[i, j], Y[i, j]])
+
+            ax.contour(X, Y, new_Z, [0], colors='k')
+            self.contour_Zs.append(new_Z)
+
+        self.graph.draw_idle()
     
     def get_surface_plot(self, ax: Axes, variables: list[Variable], function: Function) -> None:
         if len(variables) != 2:
             raise ValueError(f"Incorrect number of variables. Have {len(variables)}, need 2.")
         
         fig = ax.figure
-
-        if not hasattr(ax, "plot_surface"):
-            fig.clear()
-            ax = fig.add_subplot(111, projection="3d")
+        fig.clear()
+        ax = fig.add_subplot(111, projection="3d")
 
         x1 = np.linspace(variables[0].min, variables[0].max, 11)
         x2 = np.linspace(variables[1].min, variables[1].max, 11)
@@ -160,6 +228,7 @@ class PlottingPage(QWidget):
                 Z[i, j] = function([X[i, j], Y[i, j]])
 
         self.XYZ = {'X': X, 'Y': Y, 'Z': Z}
+        self.plot_type = PlotType.SURFACE
 
         ax.clear()
         ax.plot_surface(X, Y, Z, cmap="viridis")
@@ -168,6 +237,7 @@ class PlottingPage(QWidget):
         ax.set_xlabel(f"${self.titles['X']}$")
         ax.set_ylabel(f"${self.titles['Y']}$")
         ax.set_zlabel(f"${self.titles['Z']}$")
+        ax.set_title(f"Surface Plot")
 
         self.graph.draw_idle()
 
@@ -183,14 +253,22 @@ class PlottingPage(QWidget):
         new_widget = MplWidget(self)
         fig = new_widget.axes.figure
         fig.clear()
-        new_widget.axes = fig.add_subplot(111, projection="3d")
+        new_widget.axes = fig.add_subplot(111, projection="3d") if self.plot_type == PlotType.SURFACE else fig.add_subplot(111)
 
         new_widget.axes.clear()
-        new_widget.axes.plot_surface(self.XYZ['X'], self.XYZ['Y'], self.XYZ['Z'], cmap="viridis")
+        if self.plot_type == PlotType.SURFACE:
+            new_widget.axes.plot_surface(self.XYZ['X'], self.XYZ['Y'], self.XYZ['Z'], cmap="viridis")
+
+        else:
+            f_contour = new_widget.axes.contour(self.XYZ['X'], self.XYZ['Y'], self.XYZ['Z'], 30)
+            new_widget.axes.clabel(f_contour)
+
+            for Z in self.contour_Zs:
+                new_widget.axes.contour(self.XYZ['X'], self.XYZ['Y'], Z, [0], colors='k')
 
         new_widget.axes.set_xlabel(f"${self.titles['X']}$")
         new_widget.axes.set_ylabel(f"${self.titles['Y']}$")
-        new_widget.axes.set_zlabel(f"${self.titles['Z']}$")
+        if self.plot_type == PlotType.SURFACE: new_widget.axes.set_zlabel(f"${self.titles['Z']}$")
         new_widget.axes.grid(True)
 
         toolbar = NavigationToolbar(new_widget, dialog)
