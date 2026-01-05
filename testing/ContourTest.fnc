@@ -4,8 +4,8 @@
 
 *VARIABLE: 2
 
-X1: -1, 5
-X2: -1, 5
+X1: -1.0, 5.0
+X2: -1.0, 5.0
 
 *CONSTANT: 0
 
@@ -16,17 +16,17 @@ O1 = F1;
 
 *EQUALITY-CONSTRAINT: 1
 
-EQ1 = F2 - 3;
+EQ1 = F2 - 3.0;
 
 *INEQUALITY-CONSTRAINT: 1
 
-INEQ1 = F3 - 1;
+INEQ1 = -(F3 - 1.0);
 
 *FUNCTION: 3
 
-F1 = (x1 - 2) ^ 2 + (x2 - 2) ^ 2;
-F2 = x1 + x2;
-F3 = x1;
+F1 = (X1 - 2) ^ 2 + (X2 - 2) ^ 2;
+F2 = X1 + X2;
+F3 = X1;
 
 #--------------------------------------------------
 # Input File End

@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QHBoxLayout, QWidget, QSizePolicy
+from PySide6.QtWidgets import QHBoxLayout, QWidget
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtCore import Qt, QSize
 
@@ -39,7 +39,7 @@ class DesignPopup(MessageBoxBase):
         layout.addWidget(self.var_scroll)
 
         # --- Functions ---
-        self.function_section = FunctionsSection(parent, clickable_title=False)
+        self.function_section = FunctionsSection(parent, clickable_title=False, clamp_value=40)
         if functions:
             [self.function_section.add_row(f.name.upper(), f.text.upper()) for f in functions]
         else:

@@ -151,7 +151,7 @@ class InequalityItem(DefaultItem):
         self.add_btns()
 
 class FunctionItem(DefaultItem):
-    def __init__(self, name: str, value: float, parent=None):
+    def __init__(self, name: str, value: float, parent=None, clamp_value: int=80):
         super().__init__()
 
         self.name = name
@@ -161,7 +161,7 @@ class FunctionItem(DefaultItem):
         self.name_box = LineEdit()
         self.name_box.setText(self.name)
         self.name_box.setFixedWidth(75)
-        self.value_box = EquationButton("", parent)
+        self.value_box = EquationButton("", parent, clamp_factor=clamp_value)
         self.value_box.set_equation(value)
 
         self.layout.addWidget(self.name_box)

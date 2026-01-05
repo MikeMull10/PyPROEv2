@@ -280,16 +280,17 @@ class InequalitiesSection(FormSection):
 class FunctionsSection(FormSection):
     row_count_changed = Signal(int)
 
-    def __init__(self, parent=None, function_name_update: callable=None, clickable_title: bool=True):
+    def __init__(self, parent=None, function_name_update: callable=None, clickable_title: bool=True, clamp_value: int=80):
         super().__init__("Functions", clickable_title=clickable_title)
         self.parent = parent
         self.function_name_update = function_name_update
+        self.clamp_value = clamp_value
 
     def add_row(self, name: str = None, value: str = ""):
         if not name:
             name = f"F{self.row_container.count() + 1}"
 
-        item = FunctionItem(name, value, self.parent)
+        item = FunctionItem(name, value, self.parent, clamp_value=self.clamp_value)
         self.row_container.addWidget(item)
 
         super().add_row(item)

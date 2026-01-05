@@ -61,4 +61,22 @@ if __name__ == "__main__":
     entry = PROJECT_ROOT / "main.py"   # change if needed
     scan_file(entry)
 
+    # Only consider dependencies in the main directory
+    main_deps = {f for f in deps if f.parent == PROJECT_ROOT}
+    for d in main_deps:
+        print(d)
+    exit()
+
+    # All .py files in the main directory
+    main_py_files = set(PROJECT_ROOT.glob("*.py"))
+
+    # Files to delete: those in main dir but not used
+    to_delete = main_py_files - main_deps
+
+    print("Deleting the following unused .py files in the main directory:")
+    for f in to_delete:
+        print(f"  {f.name}")
+        # f.unlink()
+
+    print("\nRemaining dependencies:")
     print("\n".join(sorted(str(p.relative_to(PROJECT_ROOT)) for p in deps)))

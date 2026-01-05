@@ -52,13 +52,13 @@ class EquationEditorDialog(MessageBoxBase):
 
 
 class EquationButton(PushButton):
-    def __init__(self, equation_text: str = "", parent=None):
+    def __init__(self, equation_text: str = "", parent=None, clamp_factor: int=80):
         super().__init__()
 
         self.equation_text = equation_text
         self.display_text = ""
         self.parent = parent
-        self.clamp_factor = 80
+        self.clamp_factor = clamp_factor
 
         self.set_display_text()
         self.setCursor(Qt.PointingHandCursor)

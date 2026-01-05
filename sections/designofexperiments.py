@@ -306,16 +306,37 @@ class DesignOfExperimentsPage(QWidget):
         else:                         # Legacy
             num_points, num_vars, num_levels, num_funcs = map(int, lines.pop(0).split())
 
+            variables: list[Variable] = []
+            functions: list[Function] = []
+
+            line: str
+            to_use = []
             for line in lines:
-                data.append(list(map(float, line.split()))[1:])
+                if line.upper().startswith('X'):  # Variable
+                    x, minmax = line.split(':')
+                    _min, _max = map(float, minmax.strip().split(',')[:2])
+                    variables.append(Variable(x.strip(), _min, _max))
+                elif line.upper().startswith('F'):  # Function
+                    f, fnc_str = line.upper().replace(';', '').split('=')
+                    functions.append(Function(f.strip(), fnc_str.strip(), [x.symbol for x in variables]))
+                else:
+                    to_use.append(line)
+
+            start_index = len(to_use[0].split()) - num_vars - num_funcs
+            for line in to_use:
+                data.append(list(map(float, line.split()))[start_index:])
             
             for i in range(num_vars):
                 headers.append(f"X{i + 1}")
             for i in range(num_funcs):
                 headers.append(f"F{i + 1}")
 
-            np_data = np.array(data)
-            self.table.variables = [Variable(f"X{i + 1}", min(np_data[:, i]), max(np_data[:, i])) for i in range(num_vars)]
+            if len(variables) == 0:
+                np_data = np.array(data)
+                variables = [Variable(f"X{i + 1}", min(np_data[:, i]), max(np_data[:, i])) for i in range(num_vars)]
+            self.table.variables = variables
+
+            if len(functions) > 0: self.table.functions = functions
             self.table.populate(data=[[str(d) for d in da] for da in data], headers=headers)
     
     def save_to_file(self) -> str:

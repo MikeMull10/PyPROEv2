@@ -56,7 +56,7 @@ class FormulationPage(QWidget):
 
         clear_btn = ToolButton(ResetIcon())
         clear_btn.clicked.connect(self.clear)
-        clear_btn.setToolTip("Clear the Formulation section.")
+        clear_btn.setToolTip("Clear Data")
         clear_btn.setCursor(Qt.PointingHandCursor)
 
         layout.addWidget(title)

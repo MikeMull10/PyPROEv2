@@ -1,5 +1,4 @@
 from __future__ import annotations
-from handlers.function import Function
 
 import re as regex
 import numpy as np
@@ -187,7 +186,7 @@ def get_fast_func(expr, variables):
 class Function:
     registry = {}
 
-    def __init__(self, name: str, function: str[Function], variables: list[str], constants: dict=None):
+    def __init__(self, name: str, function: str["Function"], variables: list[str], constants: dict=None):
         if function.strip() == "": function = "0"
 
         self.name = name.lower()

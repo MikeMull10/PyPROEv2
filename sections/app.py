@@ -21,7 +21,7 @@ from components.helppopup import DocumentationPopup
 from components.savetypepopup import SavePopup, SaveType
 from components.basicpopup import BasicPopup
 
-import sys, ctypes
+import sys, ctypes, traceback
 
 
 class App(FluentWindow):
@@ -37,7 +37,6 @@ class App(FluentWindow):
 
         # --- SETTINGS ---
         self.settings = QSettings("PyPROE", "PyPROE App")
-        self.set_app_theme()
 
         # --- PAGES ---
         self.frm = FormulationPage(parent=self)
@@ -56,6 +55,9 @@ class App(FluentWindow):
 
         # --- MENU & SHORTCUTS ---
         self.init_shortcuts()
+
+        # --- Apply Saved Theme ---
+        self.set_app_theme()
 
     def init_navigation(self):
         """ Correct way to add sub-pages in FluentWindow """
@@ -85,6 +87,11 @@ class App(FluentWindow):
         )
         self.addSubInterface(self.page_settings, FI.SETTING, "Settings", NavigationItemPosition.BOTTOM)
 
+        # --- Change Cursor on Hover ---
+        open_btn.setCursor(Qt.PointingHandCursor)
+        save_btn.setCursor(Qt.PointingHandCursor)
+        self.navigationInterface.setCursor(Qt.PointingHandCursor)
+
     def init_shortcuts(self):
         QApplication.instance().quit()
         QShortcut(QKeySequence("Ctrl+Q"), self).activated.connect(self._close_application)
@@ -109,22 +116,26 @@ class App(FluentWindow):
 
         dlg.setFileMode(QFileDialog.ExistingFile)
         dlg.setAcceptMode(QFileDialog.AcceptOpen)
-
+        
         if dlg.exec():
-            filename = dlg.selectedFiles()[0]
-            self.settings.setValue('previous_open_file_dir', filename)
+            try:
+                filename = dlg.selectedFiles()[0]
+                self.settings.setValue('previous_open_file_dir', filename)
 
-            if filename.endswith(".fnc"):
-                if self.stackedWidget.currentIndex() == 0:
-                    self.frm.load_from_file(file_path=filename)
-                elif self.stackedWidget.currentIndex() == 1:
-                    self.plotting.formpage.load_from_file(file_path=filename)
-            
-            elif filename.endswith(".doe"):
-                self.doe.load_from_file(file_path=filename)
+                if filename.endswith(".fnc"):
+                    if self.stackedWidget.currentIndex() == 0:
+                        self.frm.load_from_file(file_path=filename)
+                    elif self.stackedWidget.currentIndex() == 1:
+                        self.plotting.formpage.load_from_file(file_path=filename)
+                
+                elif filename.endswith(".doe"):
+                    self.doe.load_from_file(file_path=filename)
 
-            else:
-                pop = BasicPopup(self, "Unknown File Extension", f".{filename.split('.')[1]} extension is unknown. Please use .doe for a Design of Experiment file and .fnc for Forumation file.")
+                else:
+                    pop = BasicPopup(self, "Unknown File Extension", f".{filename.split('.')[1]} extension is unknown. Please use .doe for a Design of Experiment file and .fnc for Forumation file.")
+                    pop.exec()
+            except Exception as e:
+                pop = BasicPopup(self, "ERROR", f"{e}\n\n{e.__traceback__}")
                 pop.exec()
     
     def _save_file(self):
