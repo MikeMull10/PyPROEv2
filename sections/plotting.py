@@ -12,6 +12,8 @@ from sections.formulation import FormulationPage
 from matplotlib.axes import Axes
 from qfluentwidgets import MessageBoxBase, ComboBox, SubtitleLabel, FluentIconBase, PrimaryDropDownPushButton, PushButton, RoundMenu, Theme, theme
 
+from fixpath import app_root
+
 from enum import Enum
 import numpy as np
 import re
@@ -31,7 +33,10 @@ class PlotType(Enum):
 
 class GraphIcon(FluentIconBase):
     def path(self, _theme=Theme.AUTO):
-        return "assets/chart-white.svg" if theme() == Theme.DARK else "assets/chart-black.svg"
+        base = app_root() / "assets"
+        if theme() == Theme.DARK:
+            return str(base / "chart-white.svg")
+        return str(base / "chart-black.svg")
     
 class ChoosePopup(MessageBoxBase):
     def __init__(self, parent, title: str | None=None, options: list[str] | None=None, hide_cancel: bool=False):

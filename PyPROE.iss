@@ -3,27 +3,27 @@
 
 [Setup]
 ; Basic Information
-AppName=PyPROE
+AppName=PyPROE X
 AppVersion=1.0
-DefaultDirName={pf}\PyPROE
-DefaultGroupName=PyPROE
-OutputDir=C:\Users\Michael\Documents\GitHub\GimOPT\PyGoose\
+DefaultDirName={commonpf}\PyPROE X
+DefaultGroupName=PyPROE X
+OutputDir=C:\Users\dolph\Documents\GitHub\PyPROEv2\
 OutputBaseFilename=PyPROEInstaller
 Compression=lzma
 SolidCompression=yes
 
 [Files]
 ; Specify the files to be included in the installer
-Source: "C:\Users\Michael\Documents\GitHub\GimOPT\PyGoose\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\dolph\Documents\GitHub\PyPROEv2\dist\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 ; Create shortcuts
-Name: "{group}\PyPROE"; Filename: "{app}\PyPROE.exe"
-Name: "{userdesktop}\PyPROE"; Filename: "{app}\PyPROE.exe"; Tasks: desktopicon
+Name: "{group}\PyPROE X"; Filename: "{app}\PyPROE X.exe"
+Name: "{userdesktop}\PyPROE X"; Filename: "{app}\PyPROE X.exe"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop icon"; GroupDescription: "Additional icons";
 
 [Run]
 ; Run the application after installation
-Filename: "{app}\PyPROE.exe"; Description: "{cm:LaunchProgram,PyPROE}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\PyPROE X.exe"; Description: "{cm:LaunchProgram,PyPROE X}"; Flags: nowait postinstall skipifsilent

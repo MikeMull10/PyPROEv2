@@ -20,6 +20,7 @@ from stylesheet.accents import ACCENT_COLORS
 from components.helppopup import DocumentationPopup
 from components.savetypepopup import SavePopup, SaveType
 from components.basicpopup import BasicPopup
+from fixpath import app_root
 
 import sys, ctypes, traceback
 
@@ -28,7 +29,7 @@ class App(FluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("PyPROE X")
-        self.setWindowIcon(QIcon("assets/logo.png"))
+        self.setWindowIcon(QIcon((app_root() / "assets" / "logo.png").as_posix()))
         if sys.platform == "win32": ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PyPROE X.v0")
         self.resize(1400, 900)
         self.showMaximized()
@@ -36,14 +37,15 @@ class App(FluentWindow):
         self.version = "0.0.0"
 
         # --- SETTINGS ---
+        self.page_settings = SettingsPage(self.trigger_theme_change)
         self.settings = QSettings("PyPROE", "PyPROE App")
+        self.set_app_theme()
 
         # --- PAGES ---
         self.frm = FormulationPage(parent=self)
         self.doe = DesignOfExperimentsPage(parent=self)
         self.mmd = MetamodelPage(parent=self, doe_table=self.doe.table)
         self.opt = OptimizationPage(self.frm)
-        self.page_settings = SettingsPage(self.trigger_theme_change)
         self.main_page = MainPage(formpage=self.frm, doepage=self.doe, metapage=self.mmd, optpage=self.opt)
         self.plotting = PlottingPage(parent=self)
 
@@ -55,9 +57,6 @@ class App(FluentWindow):
 
         # --- MENU & SHORTCUTS ---
         self.init_shortcuts()
-
-        # --- Apply Saved Theme ---
-        self.set_app_theme()
 
     def init_navigation(self):
         """ Correct way to add sub-pages in FluentWindow """
@@ -135,7 +134,7 @@ class App(FluentWindow):
                     pop = BasicPopup(self, "Unknown File Extension", f".{filename.split('.')[1]} extension is unknown. Please use .doe for a Design of Experiment file and .fnc for Forumation file.")
                     pop.exec()
             except Exception as e:
-                pop = BasicPopup(self, "ERROR", f"{e}\n\n{e.__traceback__}")
+                pop = BasicPopup(self, "ERROR", f"{e}\n\n{traceback.format_exc()}")
                 pop.exec()
     
     def _save_file(self):
@@ -182,8 +181,12 @@ class App(FluentWindow):
         self.opt._solve(fnc)
 
     def show_documentation(self) -> None:
-        popup = DocumentationPopup(self)
-        popup.exec()
+        try:
+            popup = DocumentationPopup(self)
+            popup.exec()
+        except Exception as e:
+            pop = BasicPopup(self, "ERROR", f"{e}\n\n{traceback.format_exc()}\n\n{app_root()}\n\n{getattr(sys, "frozen", False)}\n\n{getattr(sys, "frozen", False) != False}")
+            pop.exec()
     
     def set_app_theme(self) -> None:
         setTheme(Theme.DARK if self.settings.value("theme") == "Dark" else Theme.LIGHT)

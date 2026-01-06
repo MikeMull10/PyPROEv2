@@ -16,7 +16,7 @@ from components.clickabletitle import ClickableTitleLabel
 
 from sections.designofexperiments import make_row
 
-from components.graph import ToggleWidget, MplWidget
+from components.graph import ToggleWidget
 
 from multiprocessing import Process, Queue
 import numpy as np

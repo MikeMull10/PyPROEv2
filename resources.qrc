@@ -1,0 +1,15 @@
+<RCC>
+    <qresource prefix="/">
+        <file>docs/imgs/ex1.png</file>
+        <file>docs/imgs/doe.png</file>
+        <file>docs/imgs/eq.png</file>
+        <file>docs/imgs/copy.png</file>
+        <file>docs/imgs/funcs.png</file>
+        <file>docs/imgs/ineq.png</file>
+        <file>docs/imgs/obj.png</file>
+        <file>docs/imgs/opt-head.png</file>
+        <file>docs/imgs/paste.png</file>
+        <file>docs/imgs/sol.png</file>
+        <file>docs/imgs/vars.png</file>
+    </qresource>
+</RCC>

@@ -8,11 +8,16 @@ from components.function_parse import parse_function_offset
 from components.divider import Divider
 from components.basicpopup import BasicPopup
 from components.inputfnc2 import InputFile
+
+from fixpath import app_root
 import os, pyperclip
 
 class ResetIcon(FluentIconBase):
     def path(self, _theme=Theme.AUTO):
-        return "assets/reset-white.svg" if theme() == Theme.DARK else "assets/reset-black.svg"
+        base = app_root() / "assets"
+        if theme() == Theme.DARK:
+            return str(base / "reset-white.svg")
+        return str(base / "reset-black.svg")
 
 class FormulationPage(QWidget):
     def __init__(self, parent=None):

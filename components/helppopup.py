@@ -3,7 +3,9 @@ from PySide6.QtGui import QKeySequence, QShortcut, QTextBlockFormat, QTextCursor
 from PySide6.QtCore import QSize, Qt
 
 from qfluentwidgets import TextBrowser, MessageBoxBase, TreeWidget
-import os
+from fixpath import app_root
+from pathlib import Path
+import resources_rc
 
 
 DOC_MAP = {
@@ -37,7 +39,6 @@ class DocumentationPopup(MessageBoxBase):
         layout.addWidget(self.list)
 
         self.md = TextBrowser()
-        self.md.setMarkdown(open("docs/getting_started.md").read())
 
         font = QFont()
         font.setPointSize(14)
@@ -64,16 +65,13 @@ class DocumentationPopup(MessageBoxBase):
         first_item = self.list.topLevelItem(0)
         self.list.setCurrentItem(first_item)
         self.list.itemClicked.connect(self.load_doc)
+        self.load_doc(first_item)
     
-    def load_doc(self, item, column):
+    def load_doc(self, item):
         name = item.text(0)
         if name in DOC_MAP:
-            with open(DOC_MAP[name], "r", encoding="utf-8") as f:
+            with open(app_root() / Path(DOC_MAP[name]), "r", encoding="utf-8") as f:
                 text = f.read()
-
-                docs_path = os.path.abspath("docs")
-                text = text.replace("](imgs/", f"]({docs_path}/imgs/")
-                
                 self.md.setMarkdown(text)
 
                 # --- Formatting ---

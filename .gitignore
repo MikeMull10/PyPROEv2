@@ -1,3 +1,6 @@
 /.venv
 *.pyc
 *.cpython-312.pyc
+/dist
+/build
+*.exe

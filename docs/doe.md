@@ -1,4 +1,4 @@
-![Design of Experiments Page](imgs/doe.png)
+![Design of Experiments Page](:/docs/imgs/doe.png)
 # Design of Experiments
 
 ## Methods

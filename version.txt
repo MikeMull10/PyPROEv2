@@ -2,8 +2,8 @@
 # Comments (ignored by PyInstaller)
 VSVersionInfo(
     ffi=FixedFileInfo(
-        filevers=(2, 0, 1, 0),
-        prodvers=(2, 0, 1, 0),
+        filevers=(0, 0, 0, 0),
+        prodvers=(0, 0, 0, 0),
         mask=0x3f,
         flags=0x0,
         OS=0x40004,
@@ -17,11 +17,11 @@ VSVersionInfo(
                 StringTable(
                     '040904B0',
                     [
-                        StringStruct('CompanyName', 'PyPROE'),
-                        StringStruct('FileDescription', 'PyPROE Application'),
-                        StringStruct('FileVersion', '2.0.1'),
-                        StringStruct('ProductName', 'PyPROE'),
-                        StringStruct('ProductVersion', '2.0.1'),
+                        StringStruct('CompanyName', 'PyPROE X'),
+                        StringStruct('FileDescription', 'PyPROE X Application'),
+                        StringStruct('FileVersion', '0.0.0'),
+                        StringStruct('ProductName', 'PyPROE X'),
+                        StringStruct('ProductVersion', '0.0.0'),
                     ]
                 )
             ]
