@@ -28,7 +28,7 @@ datas += collect_files_in_directory(assets_directory, 'assets')
 
 print(f"Assets: {datas}")
 
-imports = ['PySide6', 'scipy', 'sympy', 'qtawesome', 'pyqtgraph', 'matplotlib', 'platypus', 'platypus-opt', 'pymoo', 'PySide6_Fluent_Widgets']
+imports = ['PySide6', 'scipy', 'sympy', 'qtawesome', 'pyqtgraph', 'matplotlib', 'pymoo', 'PySide6_Fluent_Widgets']
 
 binaries = []
 hiddenimports = ['PySide6.QtSvg', 'PySide6.QtSvgWidgets',]

@@ -1,12 +1,7 @@
 from components.fnc_objects import Variable, Constant, Function, BasicFunction, Node
 from scipy.optimize import NonlinearConstraint
 
-import matplotlib.pyplot as plt
 import numpy as np
-import sympy as sp
-import re
-
-import logging
 from pprint import pprint as pp
 
 SECTIONS = ["VARIABLE", "CONSTANT", "OBJECTIVE", "EQUALITY-CONSTRAINT", "INEQUALITY-CONSTRAINT", "FUNCTION", "GRADIENT"]
