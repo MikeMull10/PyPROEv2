@@ -3,13 +3,16 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction
 
 from components.clickabletitle import ClickableTitleLabel
-from components.polyreg import PolyTypes, poly_lookup
+from components.polyreg import PolyTypes, poly_lookup, calculate_statistics, get_Ypred
 from components.doetable import DOETable
 from components.formsections import FunctionsSection, FunctionItem, VariablesSection
-from components.rbf import RBFType, generate_rbf
+from components.rbf import RBFType, generate_rbf, rbf_statistics
+from components.fnc_objects import Variable
+from components.statspopup import StatsPopup
 from sections.designofexperiments import make_row
 from sections.formulation import ResetIcon
-from components.fnc_objects import Variable
+
+from pprint import pprint as pp
 
 from qfluentwidgets import RoundMenu, ComboBox, PrimaryPushButton, ToolButton, PrimaryDropDownToolButton, SmoothScrollArea, FluentIcon as FI
 
@@ -21,6 +24,7 @@ class MetamodelPage(QWidget):
         self.doe_table = doe_table
         self.showing = True
         self.toggle_call: callable = None
+        self.current_variables = []
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -75,6 +79,7 @@ class MetamodelPage(QWidget):
         results_layout.addWidget(scroll)
 
         self.functions_section = FunctionsSection(parent=parent, clickable_title=True)
+        self.functions_section.clamp_value = 55
         self.functions_section.add_btn.deleteLater()
         self.functions_section.reset_btn = ToolButton(ResetIcon())
         self.functions_section.next_btn  = PrimaryDropDownToolButton(FI.RIGHT_ARROW)
@@ -135,8 +140,6 @@ class MetamodelPage(QWidget):
         # --- Remove Buttons & Update Clamp Factor ---
         for i in range(self.functions_section.row_container.count()):
             item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
-            item.value_box.clamp_factor = 65
-            item.value_box.set_display_text()
             if hasattr(item, "up_arrow") and item.up_arrow is not None:
                 item.up_arrow.setParent(None)
                 item.up_arrow.deleteLater()
@@ -166,6 +169,8 @@ class MetamodelPage(QWidget):
         if len(independent_vars) == 0 or len(dependent_vars) == 0:
             return
         
+        self.current_variables = self.doe_table.variables
+        
         # --- Clear Current Items ---
         self.functions_section.clear()
 
@@ -173,6 +178,19 @@ class MetamodelPage(QWidget):
         results = func(independent_vars, dependent_vars, var_names)
         for i, res in enumerate(results, start=1):
             self.functions_section.add_row(name=f"F{i}", value=res)
+
+        for i in range(self.functions_section.row_container.count()):
+            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
+            btn = ToolButton(FI.FILTER)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setToolTip("View Function Statistics")
+            item.layout.addWidget(btn)
+            
+            X, y_pred = get_Ypred(independent_vars, dependent_vars[:, i], poly_type)
+            data = calculate_statistics(X, dependent_vars[:, i], y_pred)
+            pop = StatsPopup(function_name=f"F{i + 1}", parent=self.parent, data=data)
+
+            btn.clicked.connect(lambda _, pop=pop: pop.exec())
 
     def do_rbf(self):
         rbf = RBFType(self.function_type.currentIndex())
@@ -184,6 +202,8 @@ class MetamodelPage(QWidget):
         if len(independent_vars) == 0 or len(dependent_vars) == 0:
             return
         
+        self.current_variables = self.doe_table.variables
+        
         # --- Clear Current Items ---
         self.functions_section.clear()
 
@@ -191,6 +211,21 @@ class MetamodelPage(QWidget):
         for i in range(dependent_vars.shape[1]):
             self.functions_section.add_row(name=f"F{i + 1}", value=generate_rbf(independent_vars, dependent_vars[:, i], rbf, epsilon=1.0, poly_order=self.poly_order.currentIndex(), variable_names=var_names))
     
+        # --- Calcalate Statistics ---
+        for i in range(self.functions_section.row_container.count()):
+            item: FunctionItem = self.functions_section.row_container.itemAt(i).widget()
+            btn = ToolButton(FI.FILTER)
+            btn.setCursor(Qt.PointingHandCursor)
+            btn.setToolTip("View Function Statistics")
+            item.layout.addWidget(btn)
+
+            func = item.get_function_object(self.current_variables)
+            vars = self.current_variables
+            data = rbf_statistics(func, vars, samples=250)
+            pop = StatsPopup(function_name=f"F{i + 1}", parent=self.parent, data=data)
+
+            btn.clicked.connect(lambda _, pop=pop: pop.exec())
+
     def send(self, send_to_opt: bool=True):
         vars = self.parent.doe.table.variables
 

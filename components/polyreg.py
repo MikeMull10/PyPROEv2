@@ -168,6 +168,53 @@ def do_quad_no_int(independent: np.ndarray, dependent: np.ndarray, variable_name
     
     return ret
 
+def calculate_statistics(X, y, y_pred) -> dict:
+        # Number of data points and predictors
+        n = len(y)
+        p = X.shape[1] - 1  # Excluding the intercept
+
+        # Residuals
+        residuals = y - y_pred
+        
+        # Total sum of squares
+        y_mean = np.mean(y)
+        SS_tot = np.sum((y - y_mean) ** 2)
+        
+        # Residual sum of squares
+        SS_res = np.sum(residuals ** 2)
+        
+        # R-squared
+        R2 = 1 - (SS_res / SS_tot)
+        
+        # Adjusted R-squared
+        R2_adj = 1 - ((SS_res / (n - p - 1)) / (SS_tot / (n - 1)))
+        
+        # RMSE
+        RMSE = np.sqrt(SS_res / (n - p - 1))
+        
+        # F-statistic
+        F_stat = ((SS_tot - SS_res) / p) / (SS_res / (n - p - 1))
+        
+        # p-value for F-statistic
+        p_value = f.sf(F_stat, p, n - p - 1)
+        
+        # PRESS (Leave-one-out cross-validation)
+        H = X @ np.linalg.inv(X.T @ X) @ X.T  # Hat matrix
+        PRESS = np.sum((residuals / (1 - np.diag(H))) ** 2)
+        
+        # R2press
+        R2_press = 1 - (PRESS / SS_tot)
+        
+        return {
+            'F-statistic': F_stat,
+            'p-value': p_value,
+            'R2': R2,
+            'R2_adj': R2_adj,
+            'RMSE': RMSE,
+            'PRESS': PRESS,
+            'R2_press': R2_press
+        }
+
 
 class PolyTypes(Enum):
     LINEAR = 0
@@ -179,3 +226,25 @@ poly_lookup: dict[PolyTypes, callable] = {
     PolyTypes.QUAD_NO_INT: do_quad_no_int,
     PolyTypes.QUAD_INT: do_quad_int
 }
+
+def get_Ypred(independent, dependent, poly_type):
+    match poly_type:
+        case PolyTypes.LINEAR:
+            X = np.column_stack([
+                np.ones(independent.shape[0]),
+                *[independent[:, i] for i in range(independent.shape[1])]
+            ])
+            B = linear_regression(X, dependent)
+
+        case PolyTypes.QUAD_NO_INT:
+            X = generate_polynomial_features_no_interaction(independent)
+            B = polynomial_regression_no_interaction(independent, dependent)
+
+        case PolyTypes.QUAD_INT:
+            X = generate_polynomial_features(independent)
+            B = polynomial_regression(independent, dependent)
+
+        case _:
+            return None, None
+
+    return X, X @ B

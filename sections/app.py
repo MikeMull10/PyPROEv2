@@ -28,13 +28,13 @@ import sys, ctypes, traceback
 class App(FluentWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.version = "0.0.0"
+
         self.setWindowTitle("PyPROE X")
         self.setWindowIcon(QIcon((app_root() / "assets" / "logo.png").as_posix()))
-        if sys.platform == "win32": ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PyPROE X.v0")
+        if sys.platform == "win32": ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(f"PyPROE X.v{self.version}")
         self.resize(1400, 900)
         self.showMaximized()
-
-        self.version = "0.0.0"
 
         # --- SETTINGS ---
         self.page_settings = SettingsPage(self.trigger_theme_change)

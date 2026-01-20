@@ -67,6 +67,7 @@ class DOETable(TableWidget):
             self.headers = headers
 
         self.fix_corner()
+        self.resizeColumnsToContents()
         self.setColumnWidth(0, 70)
 
     def fix_corner(self):

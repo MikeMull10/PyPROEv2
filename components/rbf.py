@@ -1,7 +1,10 @@
 import numpy as np
 from scipy.spatial.distance import cdist
 from enum import Enum
+from components.fnc_objects import Variable, Function
+from components.optimize import gen_guesses
 import re
+import itertools
 
 class RBFType(Enum):
     LINEAR = 0
@@ -267,3 +270,69 @@ def generate_rbf(X: np.array, y: np.array, rbf_type: RBFType, epsilon: float, po
             equation = re.sub(rf'\bx{i+1}\b', var_name, equation)
     
     return equation
+
+def chebyshev_nodes_1d(a: float, b: float, n: int) -> np.ndarray:
+    """Generate n Chebyshev nodes in [a, b]."""
+    k = np.arange(n)
+    x = np.cos((2 * k + 1) * np.pi / (2 * n))
+    # scale from [-1,1] to [a,b]
+    return 0.5 * (x + 1) * (b - a) + a
+
+def rbf_statistics(phi: callable, variables: list, samples: int, use_sparse: bool = True):
+    """
+    phi: callable RBF
+    variables: list of Variable(min, max)
+    samples: grid size per dimension
+    use_sparse: if True, use sparse grid in dim > 2
+    """
+    dim = len(variables)
+
+    # Decide on grid strategy
+    if use_sparse and dim > 2:
+        # Sparse grid (product of 1D nodes but skip full tensor explosion)
+        # Here we sample randomly from Chebyshev nodes as a proxy
+        n_sparse = min(samples**2, 10000)  # cap to 10k points
+        points_1d = [chebyshev_nodes_1d(var.min, var.max, samples) for var in variables]
+        # generate sparse sampling
+        grid_points = np.array([p for p in itertools.product(*points_1d)])
+        if grid_points.shape[0] > n_sparse:
+            idx = np.random.choice(grid_points.shape[0], n_sparse, replace=False)
+            grid_points = grid_points[idx]
+    else:
+        # Full tensor-product grid
+        points_1d = [chebyshev_nodes_1d(var.min, var.max, samples) for var in variables]
+        grid_points = np.array(list(itertools.product(*points_1d)))
+
+    # Grid spacing for approximate L2 norm
+    dx = np.array([points[1] - points[0] if len(points) > 1 else 1.0 for points in points_1d])
+    cell_volume = np.prod(dx)
+
+    # Compute statistics in one pass
+    min_val = np.inf
+    max_val = -np.inf
+    sum_val = 0.0
+    sum_sq = 0.0
+    count = 0
+
+    for x in grid_points:
+        v = phi(x)
+        min_val = min(min_val, v)
+        max_val = max(max_val, v)
+        sum_val += v
+        sum_sq += v * v
+        count += 1
+
+    avg = sum_val / count
+    rms = np.sqrt(sum_sq / count)
+    l2_norm = np.sqrt(sum_sq * cell_volume)
+    inf_norm = max(abs(min_val), abs(max_val))
+
+    return {
+        "min": float(min_val),
+        "max": float(max_val),
+        "avg": float(avg),
+        "rms": float(rms),
+        "l2_norm": float(l2_norm),
+        "inf_norm": float(inf_norm),
+        # "n_points": count,
+    }
