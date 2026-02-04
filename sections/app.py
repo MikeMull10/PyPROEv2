@@ -139,22 +139,29 @@ class App(FluentWindow):
     
     def _save_file(self):
         save_type: SaveType | None = None
-        # --- Both DOE Table and Formulation are empty ---
-        if self.doe.is_empty() and self.frm.is_empty():
-            pop = BasicPopup(parent=self, title="Nothing to Save", message="There is nothing to save. Please put data into the DOE Table or Formulation Section.")
-            pop.exec()
-            return
-        # --- Only DOE TABLE is empty, so Formulation should be saved ---
-        elif self.doe.is_empty():
-            save_type = SaveType.FNC
-        # --- Only Formulation is empty, so the DOE Table should be saved ---
-        elif self.frm.is_empty():
-            save_type = SaveType.DOE
-        # --- Both are filled, so ask user which one they want to save ---
+
+        if self.stackedWidget.currentIndex() == 0:
+            # --- Both DOE Table and Formulation are empty ---
+            if self.doe.is_empty() and self.frm.is_empty():
+                pop = BasicPopup(parent=self, title="Nothing to Save", message="There is nothing to save. Please put data into the DOE Table or Formulation Section.")
+                pop.exec()
+                return
+            # --- Only DOE TABLE is empty, so Formulation should be saved ---
+            elif self.doe.is_empty():
+                save_type = SaveType.FNC
+            # --- Only Formulation is empty, so the DOE Table should be saved ---
+            elif self.frm.is_empty():
+                save_type = SaveType.DOE
+            # --- Both are filled, so ask user which one they want to save ---
+            else:
+                pop = SavePopup(parent=self)
+                ok, save_type = pop.exec()
+                if not ok: return
+        
         else:
-            pop = SavePopup(parent=self)
-            ok, save_type = pop.exec()
-            if not ok: return
+            if self.plotting.formpage.is_empty():
+                return
+            save_type = SaveType.FNC
 
         saveFile = QFileDialog(
             self,
@@ -167,12 +174,21 @@ class App(FluentWindow):
 
         if saveFile.exec():
             with open(saveFile.selectedFiles()[0], 'w') as file:
-                file.write(self.frm.convert_to_fnc() if save_type == SaveType.FNC else self.doe.save_to_file())
+                if self.stackedWidget.currentIndex() == 0:
+                    file.write(self.frm.convert_to_fnc() if save_type == SaveType.FNC else self.doe.save_to_file())
+                else:
+                    file.write(self.plotting.formpage.convert_to_fnc())
 
     def _start_opt(self):
         fnc = self.frm.convert_to_fnc()
 
-        file = InputFile(fnc, is_file=False)
+        try:
+            file = InputFile(fnc, is_file=False)
+        except Exception as e:
+            pop = BasicPopup(self, title="ERROR", message=f"Error with Formulation: {e}")
+            pop.exec()
+            return
+        
         if file.error:
             pop = BasicPopup(self, title="ERROR", message=f"Error with Formulation: {file.error_message}")
             pop.exec()

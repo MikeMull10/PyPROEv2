@@ -11,7 +11,7 @@ from sympy import (
     exp, log, ln,
     sqrt, Abs, pi,
     Sum, symbols, sympify, lambdify,
-    diff, im, Derivative, re, sign, E, N, Max
+    diff, im, Derivative, re, sign, E, N, Max, Symbol
 )
 
 locals = {
@@ -24,8 +24,18 @@ locals = {
     'sqrt': sqrt, 'abs': Abs,
     'sum': Sum, 'pi': pi,
     'im': im, 'Derivative': Derivative, 're': re,
-    'sign': sign, 'e': E, 'max': Max
+    'sign': sign, 'e': E, 'max': Max, 'min': min
 }
+
+def _validate_symbols(expr, variables, constants):
+    allowed = set(v.lower() for v in variables)
+    allowed |= set(k.lower() for k in (constants or {}).keys())
+
+    used = {str(s) for s in expr.free_symbols}
+
+    unknown = used - allowed
+    if unknown:
+        raise ValueError(f"Unknown variable(s) or constant(s): {', '.join(sorted(unknown))}")
 
 def replace_isum(match: regex.Match):
     expr = match.group(1)  # mathmatical expression
@@ -197,6 +207,7 @@ class Function:
 
         # Detect variable names using sympy
         self.expr = get_expr(function, [v.lower() for v in variables], constants=self.constants)
+        _validate_symbols(self.expr, variables, self.constants)
         if self.constants:
             self.expr = self.expr.subs(self.constants)
         self.variables = sorted(symbols(' '.join([v.lower() for v in variables]), real=True, seq=True), key=lambda s: str(s))

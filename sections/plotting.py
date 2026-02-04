@@ -115,7 +115,12 @@ class PlottingPage(QWidget):
         self.titles = {'X': None, 'Y': None, 'Z': None}
     
     def populate_graph(self, plot_type: PlotType):
-        file = InputFile(self.formpage.convert_to_fnc(), is_file=False, check_nums=False, no_objectives_throws_error=(plot_type == PlotType.CONTOURS))
+        try:
+            file = InputFile(self.formpage.convert_to_fnc(), is_file=False, check_nums=False, no_objectives_throws_error=(plot_type == PlotType.CONTOURS))
+        except Exception as e:
+            pop = BasicPopup(self, title="ERROR", message=f"Error with Formulation: {e}")
+            pop.exec()
+            return
         if file.error:
             pop = BasicPopup(self, title="ERROR", message=f"Error with Formulation: {file.error_message}")
             pop.exec()

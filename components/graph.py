@@ -17,6 +17,8 @@ class MplWidget(FigureCanvasQTAgg):
         super().__init__(self.fig)
 
     def plot(self, points):
+        if points is None or len(points[0]) <= 1: return
+
         self.points = points
         self.axes.scatter(*[points[:, i] for i in range(len(points[0]))])
 

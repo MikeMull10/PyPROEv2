@@ -13,8 +13,10 @@ DOC_MAP = {
     "Plotting": "docs/plotting.md",
     "Design of Experiments": "docs/doe.md",
     "How To (Tutorial)": "docs/howto.md",
-    "RBF Models": "docs/rbf.md",
-    "FAQ": "docs/faq.md"
+    "Shortcuts": "docs/shortcuts.md",
+    "Optimization": "docs/optimization.md",
+    "Formulation": "docs/formulation.md",
+    "Metamodeling": "docs/metamodel.md",
 }
 
 class DocumentationPopup(MessageBoxBase):
@@ -31,11 +33,14 @@ class DocumentationPopup(MessageBoxBase):
         how_to = QTreeWidgetItem(["How To (Tutorial)"])
 
         doe = QTreeWidgetItem(["Design of Experiments"])
-        # basics = QTreeWidgetItem(["Basics"])
-        # doe.addChild(basics)
+        mmd = QTreeWidgetItem(["Metamodeling"])
+        shortcuts = QTreeWidgetItem(["Shortcuts"])
+        optimization = QTreeWidgetItem(["Optimization"])
+        formulation = QTreeWidgetItem(["Formulation"])
+        optimization.addChild(formulation)
 
         self.list.setCursor(Qt.PointingHandCursor)
-        self.list.addTopLevelItems([getting_started, how_to, doe])
+        self.list.addTopLevelItems([getting_started, how_to, doe, mmd, optimization, shortcuts])
         layout.addWidget(self.list)
 
         self.md = TextBrowser()

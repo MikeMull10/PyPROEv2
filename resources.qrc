@@ -11,5 +11,8 @@
         <file>docs/imgs/paste.png</file>
         <file>docs/imgs/sol.png</file>
         <file>docs/imgs/vars.png</file>
+        <file>docs/imgs/formulation.png</file>
+        <file>docs/imgs/metamodeling.png</file>
+        <file>docs/imgs/optimization.png</file>
     </qresource>
 </RCC>

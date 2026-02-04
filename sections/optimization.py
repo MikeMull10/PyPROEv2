@@ -315,7 +315,7 @@ class OptimizationPage(QWidget):
             self.toggle.stack.setCurrentIndex(1)
 
         self.toggle.text_edit.setText(str(opt))
-
+        
         match opt['type']:
             case 'single':
                 self.toggle.graph.plot(np.array([opt['data'].x]))
