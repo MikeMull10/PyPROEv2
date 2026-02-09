@@ -71,7 +71,7 @@ class Optimize:
         input: InputFile,
         *,
         grid_size: int=5,
-        tolerance: float=1e-20,
+        tolerance: float=1e-6,
     ) -> Optimization:
         if len(input.objectives) == 0:
             return Optimization(Opt.FAILED, "No objective function.")
@@ -129,8 +129,8 @@ class Optimize:
         increment: float=0.01,
         *,
         grid_size: int=5,
-        tolerance: float=1e-20,
-        ftol: float=1e-20,
+        tolerance: float=1e-6,
+        ftol: float=1e-6,
     ) -> Optimization:
         if len(input.objectives) == 0:
             return Optimization(Opt.FAILED, "No objective function.")
