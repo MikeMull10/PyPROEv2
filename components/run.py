@@ -19,15 +19,15 @@ def run(queue: Queue, method: METHOD, file: str, settings: dict):
     ### --- SciPy ---
     match method:
         case METHOD.Single:
-            res = Opt.single(file, grid_size=settings.get('gridsize', 5), tolerance=settings.get('tolerance', 1e-20))
+            res = Opt.single(file, grid_size=settings.get('gridsize', 5), tolerance=settings.get('tolerance', 1e-6))
         case METHOD.Multi:
             res = Opt.multi(
                 input=file,
                 min_weight=settings.get('min_weight', 0.01),
                 increment=settings.get('increment', 0.01),
                 grid_size=settings.get('gridsize', 5),
-                tolerance=settings.get('tolerance', 1e-20),
-                ftol=settings.get('ftol', 1e-20)
+                tolerance=settings.get('tolerance', 1e-6),
+                ftol=settings.get('ftol', 1e-6)
             )
         case METHOD.NSGAII:
             res = Opt.evolve(
